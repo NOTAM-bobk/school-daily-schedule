@@ -706,3 +706,27 @@ button {
   .vc-group span[data-vc-digit] { opacity: 1; }
   .vc-canvas { display: none; }
 }
+
+/* Background Noise and Radial Spotlight */
+.bg-noise-container {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  background-color: #020617; /* slate-950 */
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.bg-noise-spotlight {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle 560px at 50% 200px, #f97316, transparent);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.bg-noise-canvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}

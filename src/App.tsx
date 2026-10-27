@@ -1,3 +1,4 @@
+import BackgroundNoise from "./components/ui/background-noise"
 import { useEffect, useMemo, useState } from 'react'
 import { CountdownCard, type StatusTone } from './components/CountdownCard'
 import { DayStrip } from './components/DayStrip'
@@ -118,7 +119,7 @@ export default function App() {
 
   return (
     <div className="page">
-      <div className="glow" aria-hidden />
+      <BackgroundNoise />
 
       <header className="topbar">
         <div className="brand">
