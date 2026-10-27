@@ -5,7 +5,7 @@ import { DayStrip } from './components/DayStrip'
 import { LunchPicker } from './components/LunchPicker'
 import { Timeline } from './components/Timeline'
 import { WeekSwitcher, type WeekChoice } from './components/WeekSwitcher'
-import { LUNCHES, SCHOOL, autoWeek, buildDay, dayTypeFor } from './data/schedule'
+import { LUNCHES, autoWeek, buildDay, dayTypeFor } from './data/schedule'
 import { dateKey, isSchoolDay, noSchoolReason, nextSchoolDate, EARLY_RELEASES } from './data/calendar'
 import { useNow, useStoredState } from './lib/hooks'
 import { getDayStatus, type DayStatus } from './lib/status'
@@ -14,7 +14,6 @@ import {
   dayKey,
   formatClock,
   formatLongDate,
-  formatShortDate,
   nextSchoolWeekdayIndex,
   secondsSinceMidnight,
   secondsUntilWeekdayStart,
@@ -24,17 +23,6 @@ import type { LunchId, ScheduleBlock, Week, WeekdayIndex } from './types'
 
 const WEEK_KEY = 'minnetonka.week'
 const LUNCH_KEY = 'minnetonka.lunch'
-const VISITS_KEY = 'minnetonka.visits'
-
-const FOOTER_LINKS = [
-  'AB week schedule',
-  'Daily calendar',
-  'Year calendar',
-  'Lunch',
-  'Settings',
-  'TV Panel',
-  'Admin',
-] as const
 
 interface Hero {
   eyebrow: string
@@ -57,21 +45,6 @@ export default function App() {
 
   const [storedWeek, setStoredWeek] = useStoredState<WeekChoice>(WEEK_KEY, 'auto')
   const [storedLunch, setStoredLunch] = useStoredState<LunchId>(LUNCH_KEY, 'lunch2')
-
-  // Total visits tracked in localStorage
-  const [totalVisits, setTotalVisits] = useState<number>(1)
-
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(VISITS_KEY)
-      const current = stored ? parseInt(stored, 10) : 0
-      const next = isNaN(current) ? 1 : current + 1
-      window.localStorage.setItem(VISITS_KEY, String(next))
-      setTotalVisits(next)
-    } catch {
-      // localStorage may fail in restricted/private modes
-    }
-  }, [])
 
   // Validate whatever came out of localStorage before trusting it.
   const weekChoice: WeekChoice = storedWeek === 'A' || storedWeek === 'B' ? storedWeek : 'auto'
@@ -117,109 +90,46 @@ export default function App() {
     return target
   }, [now, hero.timer])
 
+  const notice = !schoolToday
+    ? `${closureReason === 'Weekend' ? 'Weekend · no classes today' : `${closureReason ?? 'No classes today'} · no classes today`}${
+        nextSchoolDay ? ` · Next school day ${formatLongDate(nextSchoolDay)}` : ''
+      }`
+    : (calendarNotice ?? null)
+
   return (
     <>
       <BackgroundNoise />
       <div className="page">
+        <main className="layout">
+          <CountdownCard
+            eyebrow={hero.eyebrow}
+            caption={hero.caption}
+            timer={hero.timer}
+            targetDate={timerTarget}
+            progress={hero.progress}
+            statusLabel={hero.statusLabel}
+            tone={hero.tone}
+            meta={hero.meta}
+          />
 
-      <header className="topbar">
-        <div className="brand">
-          <span className="brand-mark" aria-hidden />
-          <div>
-            <p className="brand-name">{SCHOOL.name}</p>
-            <p className="brand-sub">Daily bell schedule · {SCHOOL.year}</p>
-          </div>
-        </div>
+          {notice && <p className="notice">{notice}</p>}
 
-        <div className="header-tools">
-          <span className="week-badge">Week {week}</span>
-          <div className="clock">
-            <span className="clock-date">{formatShortDate(now)}</span>
-            <time className="clock-time">{formatClock(nowSeconds / 60, true)}</time>
-          </div>
-        </div>
-      </header>
+          <Timeline blocks={blocks} live={live} nowSeconds={nowSeconds} />
 
-      <main className="layout">
-        {/* Main 2-column view: Timer on Left, Day Schedule on Right */}
-        <div className="split-view">
-          <div className="split-left">
-            <CountdownCard
-              eyebrow={hero.eyebrow}
-              caption={hero.caption}
-              timer={hero.timer}
-              targetDate={timerTarget}
-              progress={hero.progress}
-              statusLabel={hero.statusLabel}
-              tone={hero.tone}
-              meta={hero.meta}
-            />
-          </div>
+          <section className="schedule-controls" aria-label="Schedule controls">
+            <div className="controls-date">
+              <span className="controls-weekday">{WEEKDAY_NAMES[selectedDay]}</span>
+              <span className="controls-full-date">{formatLongDate(now)}</span>
+            </div>
 
-          <div className="split-right">
-            {!schoolToday && <p className="card-sub calendar-notice">{closureReason === 'Weekend' ? 'Weekend · no classes today' : `${closureReason ?? 'No classes today'} · no classes today`}{nextSchoolDay ? ` Next school day: ${formatLongDate(nextSchoolDay)}` : ''}</p>}
-            {calendarNotice && schoolToday && <p className="card-sub calendar-notice">{calendarNotice}</p>}
-            {schoolToday && <p className="card-sub calendar-notice">Bell times and Anchor Time are not verified for 2026–27. The attached daily timetable is from 2024–25, so use the countdown as a placeholder until current times are provided.</p>}
-            <Timeline
-              blocks={blocks}
-              lunch={lunch}
-              day={selectedDay}
-              dayType={dayType}
-              live={live}
-              nowSeconds={nowSeconds}
-            />
-          </div>
-        </div>
-
-        <section className="schedule-controls" aria-label="Schedule controls">
-          <div className="controls-date">
-            <span className="controls-weekday">{WEEKDAY_NAMES[selectedDay]}</span>
-            <span className="controls-full-date">{formatLongDate(now)}</span>
-          </div>
-
-          <div className="compact-controls">
-            <DayStrip selected={selectedDay} todayIndex={todayIndex} onSelect={setSelectedDay} />
-            <WeekSwitcher value={weekChoice} detected={detectedWeek} onChange={setStoredWeek} />
-          </div>
-          <LunchPicker value={lunch} onChange={setStoredLunch} />
-        </section>
-
-      </main>
-
-      {/* Footer with requested links and total visits counter */}
-      <footer className="footer">
-        <nav className="footer-links" aria-label="Schedule quick links">
-          {FOOTER_LINKS.map((link) => (
-            <a
-              key={link}
-              href="#"
-              onClick={(e) => e.preventDefault()}
-              className="footer-link"
-            >
-              {link}
-            </a>
-          ))}
-        </nav>
-
-        <div className="footer-visits">
-          <span className="visits-badge">
-            <span className="visits-dot" aria-hidden />
-            Your total visits: <strong className="visits-number">{totalVisits}</strong>
-          </span>
-        </div>
-
-        <div className="footer-notes">
-          <p>
-            Bell times follow your device clock ({formatLongDate(now)}). Schedule data lives in{' '}
-            <code>src/data/schedule.ts</code>.
-          </p>
-          <p>
-            A/B rotation: A weeks put A days on Mon · Wed · Fri. Lunch shift, day and week choices are saved in this
-            browser.
-          </p>
-        </div>
-      </footer>
-    </div>
+            <div className="compact-controls">
+              <DayStrip selected={selectedDay} todayIndex={todayIndex} onSelect={setSelectedDay} />
+              <WeekSwitcher value={weekChoice} detected={detectedWeek} onChange={setStoredWeek} />
+            </div>
+            <LunchPicker value={lunch} onChange={setStoredLunch} />
+          </section>
+        </main>
+      </div>
     </>
   )
 }
@@ -299,7 +209,7 @@ function describeHero(args: HeroArgs): Hero {
   if (!schoolToday) {
     return {
       eyebrow: closureReason ?? 'No classes today',
-      caption: `${nextSchoolDay ? `Next school day: ${formatLongDate(nextSchoolDay)}. ` : ''}Bell times are awaiting the current timetable.`,
+      caption: nextSchoolDay ? `Next school day: ${formatLongDate(nextSchoolDay)}` : 'No classes today',
       timer: null,
       progress: null,
       statusLabel: 'No school today',
