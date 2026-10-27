@@ -8,10 +8,10 @@ interface LunchPickerProps {
 
 export function LunchPicker({ value, onChange }: LunchPickerProps) {
   return (
-    <div className="field">
-      <div className="field-head">
+    <div className="lunch-picker">
+      <div className="lunch-picker-label">
         <span className="field-label">Lunch shift</span>
-        <span className="field-hint">Re-times the midday bells</span>
+        <span className="field-hint">Adjusts midday bells</span>
       </div>
       <div className="lunch-grid" role="radiogroup" aria-label="Lunch shift">
         {LUNCHES.map((lunch) => {
@@ -27,7 +27,6 @@ export function LunchPicker({ value, onChange }: LunchPickerProps) {
             >
               <span className="lunch-name">{lunch.name}</span>
               <span className="lunch-time">{lunchWindow(lunch.id)}</span>
-              <span className="lunch-detail">{lunch.detail}</span>
             </button>
           )
         })}

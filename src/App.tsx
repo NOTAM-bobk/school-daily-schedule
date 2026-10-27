@@ -108,6 +108,14 @@ export default function App() {
     nextSchoolDay,
   })
 
+  const timerTarget = useMemo(() => {
+    if (hero.timer === null) return null
+    const target = new Date(now)
+    target.setMilliseconds(0)
+    target.setSeconds(target.getSeconds() + hero.timer)
+    return target
+  }, [now, hero.timer])
+
   return (
     <div className="page">
       <div className="glow" aria-hidden />
@@ -121,9 +129,12 @@ export default function App() {
           </div>
         </div>
 
-        <div className="clock">
-          <span className="clock-date">{formatShortDate(now)}</span>
-          <time className="clock-time">{formatClock(nowSeconds / 60, true)}</time>
+        <div className="header-tools">
+          <span className="week-badge">Week {week}</span>
+          <div className="clock">
+            <span className="clock-date">{formatShortDate(now)}</span>
+            <time className="clock-time">{formatClock(nowSeconds / 60, true)}</time>
+          </div>
         </div>
       </header>
 
@@ -135,6 +146,7 @@ export default function App() {
               eyebrow={hero.eyebrow}
               caption={hero.caption}
               timer={hero.timer}
+              targetDate={timerTarget}
               progress={hero.progress}
               statusLabel={hero.statusLabel}
               tone={hero.tone}
@@ -157,22 +169,19 @@ export default function App() {
           </div>
         </div>
 
-        {/* Bottom controls: Day, Week switcher, and Lunch picks */}
-        <section className="card controls controls--bottom" aria-label="Schedule controls">
-          <div className="controls-header">
-            <div className="controls-date">
-              <span className="controls-weekday">{WEEKDAY_NAMES[selectedDay]}</span>
-              <span className="controls-full-date">{formatLongDate(now)}</span>
-            </div>
+        <section className="schedule-controls" aria-label="Schedule controls">
+          <div className="controls-date">
+            <span className="controls-weekday">{WEEKDAY_NAMES[selectedDay]}</span>
+            <span className="controls-full-date">{formatLongDate(now)}</span>
           </div>
 
-          <DayStrip selected={selectedDay} todayIndex={todayIndex} onSelect={setSelectedDay} />
-
-          <div className="controls-pickers">
+          <div className="compact-controls">
+            <DayStrip selected={selectedDay} todayIndex={todayIndex} onSelect={setSelectedDay} />
             <WeekSwitcher value={weekChoice} detected={detectedWeek} onChange={setStoredWeek} />
-            <LunchPicker value={lunch} onChange={setStoredLunch} />
           </div>
+          <LunchPicker value={lunch} onChange={setStoredLunch} />
         </section>
+
       </main>
 
       {/* Footer with requested links and total visits counter */}
