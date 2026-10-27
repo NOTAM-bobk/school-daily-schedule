@@ -1,6 +1,6 @@
 # School Daily Schedule
 
-A single-page daily schedule for students: a **live countdown** to the next bell, a **three-lunch shift selector**, an **A/B week switcher**, today's date and the full bell-by-bell timeline. Styled like a Vercel dashboard — near-black canvas, hairline borders, Geist / Geist Mono.
+A single-page daily schedule for students: a **live countdown** to the next bell, a **three-lunch shift selector**, an **A/B week switcher**, today's date and the full bell-by-bell timeline. Styled like a Vercel dashboard — near-black canvas, hairline borders, and the Nothing typeface (Ndot-55 + Lettera Mono LL, self-hosted in `src/assets/fonts`).
 
 Built with React + TypeScript + Vite. Static output, zero server, deploys to Vercel as-is.
 
@@ -21,6 +21,7 @@ Choices are remembered in `localStorage`, so a student sets their lunch once.
 
 Everything is data in **`src/data/schedule.ts`** — that is the only file a school needs to edit.
 
+- **An 8:00 AM – 2:40 PM day** built from homeroom, Anchor Time, lunch and seven 42-minute periods, in `DAY_COURSES`/`LUNCH_BELLS`.
 - **7 periods plus homeroom**, in `DAY_COURSES`, keyed by day type (`A` days and `B` days take different courses).
 - **A/B week rotation** — an A week puts A days on Mon · Wed · Fri; a B week flips it. The auto-detected week alternates weekly from `A_WEEK_ANCHOR`.
 - **Three lunch bells** in `LUNCH_BELLS`. Homeroom and the morning periods are shared; picking Lunch 1, 2 or 3 shifts that student's midday block and afternoon bells.

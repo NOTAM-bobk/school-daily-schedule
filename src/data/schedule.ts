@@ -10,6 +10,7 @@
  *     B week → Mon/Wed/Fri are B days, Tue/Thu are A days
  * · Choosing a lunch shift re-times the whole midday block for that student.
  * · Anchor Time is a 25-minute support block that runs right after first period.
+ * · The day runs 8:00 AM – 2:40 PM, whichever lunch shift a student picks.
  */
 import type { LunchId, LunchOption, ScheduleBlock, Week, WeekdayIndex } from '../types'
 import { toMinutes } from '../lib/time'
@@ -57,47 +58,48 @@ type SlotKey = 'HR' | 'ANCHOR' | 'LUNCH' | `P${1 | 2 | 3 | 4 | 5 | 6 | 7}`
 type Slot = readonly [key: SlotKey, start: string, end: string]
 
 /**
- * Bell times per lunch shift. Homeroom, Anchor Time and first/second period are
- * shared; everything from the midday block onwards shifts with the student's
- * lunch. Anchor Time (25 min) and its passing period push the rest of the day
- * 30 minutes later than the pre-Anchor timetable — those blocks are unchanged.
+ * Bell times per lunch shift for the 8:00 AM – 2:40 PM day. Homeroom, Anchor
+ * Time and the morning periods are shared; the midday block and everything after
+ * it shifts with the student's lunch. Every shift adds up to the same 400
+ * minutes: homeroom (11) + seven 42-minute periods + Anchor Time (25) + lunch
+ * (30) + eight five-minute passing periods.
  */
 const LUNCH_BELLS: Record<LunchId, readonly Slot[]> = {
   lunch1: [
-    ['HR', '07:45', '07:57'],
-    ['P1', '08:00', '08:47'],
-    ['ANCHOR', '08:52', '09:17'],
-    ['P2', '09:22', '10:09'],
-    ['P3', '10:14', '11:01'],
-    ['P4', '11:06', '11:53'],
-    ['LUNCH', '11:53', '12:23'],
-    ['P5', '12:28', '13:15'],
-    ['P6', '13:20', '14:07'],
-    ['P7', '14:12', '14:59'],
+    ['HR', '08:00', '08:11'],
+    ['P1', '08:16', '08:58'],
+    ['ANCHOR', '09:03', '09:28'],
+    ['P2', '09:33', '10:15'],
+    ['P3', '10:20', '11:02'],
+    ['P4', '11:07', '11:49'],
+    ['LUNCH', '11:49', '12:19'],
+    ['P5', '12:24', '13:06'],
+    ['P6', '13:11', '13:53'],
+    ['P7', '13:58', '14:40'],
   ],
   lunch2: [
-    ['HR', '07:45', '07:57'],
-    ['P1', '08:00', '08:47'],
-    ['ANCHOR', '08:52', '09:17'],
-    ['P2', '09:22', '10:09'],
-    ['P3', '10:14', '10:56'],
-    ['LUNCH', '10:56', '11:26'],
-    ['P4', '11:31', '12:18'],
-    ['P5', '12:23', '13:10'],
-    ['P6', '13:15', '14:02'],
-    ['P7', '14:07', '14:54'],
+    ['HR', '08:00', '08:11'],
+    ['P1', '08:16', '08:58'],
+    ['ANCHOR', '09:03', '09:28'],
+    ['P2', '09:33', '10:15'],
+    ['P3', '10:20', '11:02'],
+    ['LUNCH', '11:02', '11:32'],
+    ['P4', '11:37', '12:19'],
+    ['P5', '12:24', '13:06'],
+    ['P6', '13:11', '13:53'],
+    ['P7', '13:58', '14:40'],
   ],
   lunch3: [
-    ['HR', '07:45', '07:57'],
-    ['P1', '08:00', '08:47'],
-    ['ANCHOR', '08:52', '09:17'],
-    ['P2', '09:22', '10:09'],
-    ['P3', '10:14', '10:56'],
-    ['P4', '11:01', '11:48'],
-    ['P5', '11:53', '12:40'],
-    ['LUNCH', '12:40', '13:10'],
-    ['P6', '13:15', '14:02'],
-    ['P7', '14:07', '14:54'],
+    ['HR', '08:00', '08:11'],
+    ['P1', '08:16', '08:58'],
+    ['ANCHOR', '09:03', '09:28'],
+    ['P2', '09:33', '10:15'],
+    ['P3', '10:20', '11:02'],
+    ['P4', '11:07', '11:49'],
+    ['P5', '11:54', '12:36'],
+    ['LUNCH', '12:36', '13:06'],
+    ['P6', '13:11', '13:53'],
+    ['P7', '13:58', '14:40'],
   ],
 }
 

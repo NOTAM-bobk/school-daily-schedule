@@ -110,6 +110,8 @@ export default function App() {
     <>
       <BackgroundNoise />
       <div className="page">
+        <p className="app-mark">MHS Student Assist App - {formatLongDate(now)}</p>
+
         <main className="layout">
           <CountdownCard
             eyebrow={hero.eyebrow}

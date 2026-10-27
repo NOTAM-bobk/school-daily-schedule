@@ -1,6 +1,35 @@
+/*
+ * Nothing typeface, self-hosted from https://github.com/xeji01/nothingfont
+ * (Ndot-55 for the UI text, Lettera Mono LL for times and figures). Each face
+ * claims the whole weight range so the dot-matrix glyphs are never faux-bolded.
+ */
+@font-face {
+  font-family: 'Ndot 55';
+  src: url('./assets/fonts/Ndot55-Regular.otf') format('opentype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Lettera Mono LL';
+  src: url('./assets/fonts/LetteraMonoLL-Regular.otf') format('opentype');
+  font-weight: 100 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Lettera Mono LL';
+  src: url('./assets/fonts/LetteraMonoLL-Medium.otf') format('opentype');
+  font-weight: 600 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-sans: 'Ndot 55', 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Lettera Mono LL', 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* Theme tokens */
   --bg-canvas: #020617;
@@ -209,12 +238,73 @@ button {
 .status-dot--idle { background: #60a5fa; }
 .status-dot--off { background: #71717a; }
 
+/* Circular timer — the ring wraps the countdown and drains over the period. */
+.countdown-dial {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(20rem, 82vw);
+  aspect-ratio: 1;
+  margin: 0.9rem auto 0.35rem;
+}
+
+.countdown-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.countdown-ring-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.07);
+  stroke-width: 6;
+}
+
+.countdown-ring-value {
+  fill: none;
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.3s ease, opacity 0.3s ease;
+}
+
+.countdown-ring-value--live { stroke: #34d399; filter: drop-shadow(0 0 10px rgba(52, 211, 153, 0.35)); }
+.countdown-ring-value--lunch { stroke: #fbbf24; filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.3)); }
+.countdown-ring-value--idle { stroke: #60a5fa; }
+.countdown-ring-value--off { stroke: #71717a; }
+
+/* Resting: no period in session, so the ring holds its shape, dimmed. */
+.countdown-ring-value--resting { opacity: 0.28; filter: none; }
+
 .countdown-numbers {
   display: flex;
+  align-items: center;
   justify-content: center;
   min-height: 5.8rem;
   margin: 0.75rem auto 0.25rem;
   color: var(--fg-default);
+}
+
+.countdown-dial .countdown-numbers {
+  min-height: 0;
+  margin: 0;
+}
+
+/* The digits shrink to clear the ring; the component sets its own inline
+   font-size, so overriding it needs !important. */
+.countdown-dial .vc-root { font-size: clamp(1.9rem, 6vw, 3.4rem) !important; }
+.countdown-dial .empty-countdown { font-size: clamp(1.6rem, 5vw, 2.6rem); }
+
+/* Corner app label */
+.app-mark {
+  position: absolute;
+  top: 1.1rem;
+  right: 1.5rem;
+  max-width: 70%;
+  text-align: right;
+  font-size: 0.75rem;
+  color: var(--fg-muted);
 }
 
 .vc-root { position: relative; color: var(--fg-default); }
@@ -536,6 +626,7 @@ button {
 
   .countdown-numbers { min-height: 4.75rem; }
   .countdown-hero { padding-inline: 0.25rem; }
+  .app-mark { top: 0.75rem; right: 1rem; font-size: 0.625rem; }
   .compact-controls { gap: 0.5rem; }
   .compact-picker { gap: 0.3rem; }
   .compact-picker select { min-width: 5.6rem; padding-left: 0.4rem; font-size: 0.7rem; }
