@@ -45,14 +45,10 @@ export function Timeline({ blocks, lunch, day, dayType, live, nowSeconds }: Time
               <div className="slot-body">
                 <div className="slot-head">
                   <span className="slot-label">{block.label}</span>
-                  <span className="slot-title">{block.title}</span>
                   {isNow && <span className="chip chip--live">Now</span>}
                   {isNext && <span className="chip">Next</span>}
                   {block.kind === 'lunch' && <span className="chip chip--lunch">Your lunch</span>}
                 </div>
-                {(block.teacher || block.room) && (
-                  <p className="slot-detail">{[block.teacher, block.room].filter(Boolean).join(' · ')}</p>
-                )}
                 {isNow && status && (
                   <div className="progress progress--thin">
                     <span style={{ width: `${Math.min(100, Math.max(0, status.progress * 100))}%` }} />

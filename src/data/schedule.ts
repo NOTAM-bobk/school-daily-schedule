@@ -14,7 +14,7 @@ import type { LunchId, LunchOption, ScheduleBlock, Week, WeekdayIndex } from '..
 import { toMinutes } from '../lib/time'
 
 export const SCHOOL = {
-  name: 'Northside High School',
+  name: 'Minnetonka High School',
   year: '2026–27',
 }
 

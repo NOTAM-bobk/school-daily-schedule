@@ -20,8 +20,19 @@ import {
 } from './lib/time'
 import type { LunchId, ScheduleBlock, Week, WeekdayIndex } from './types'
 
-const WEEK_KEY = 'northside.week'
-const LUNCH_KEY = 'northside.lunch'
+const WEEK_KEY = 'minnetonka.week'
+const LUNCH_KEY = 'minnetonka.lunch'
+const VISITS_KEY = 'minnetonka.visits'
+
+const FOOTER_LINKS = [
+  'AB week schedule',
+  'Daily calendar',
+  'Year calendar',
+  'Lunch',
+  'Settings',
+  'TV Panel',
+  'Admin',
+] as const
 
 interface Hero {
   eyebrow: string
@@ -41,6 +52,21 @@ export default function App() {
 
   const [storedWeek, setStoredWeek] = useStoredState<WeekChoice>(WEEK_KEY, 'auto')
   const [storedLunch, setStoredLunch] = useStoredState<LunchId>(LUNCH_KEY, 'lunch2')
+
+  // Total visits tracked in localStorage
+  const [totalVisits, setTotalVisits] = useState<number>(1)
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(VISITS_KEY)
+      const current = stored ? parseInt(stored, 10) : 0
+      const next = isNaN(current) ? 1 : current + 1
+      window.localStorage.setItem(VISITS_KEY, String(next))
+      setTotalVisits(next)
+    } catch {
+      // localStorage may fail in restricted/private modes
+    }
+  }, [])
 
   // Validate whatever came out of localStorage before trusting it.
   const weekChoice: WeekChoice = storedWeek === 'A' || storedWeek === 'B' ? storedWeek : 'auto'
@@ -96,46 +122,82 @@ export default function App() {
       </header>
 
       <main className="layout">
-        <CountdownCard
-          eyebrow={hero.eyebrow}
-          caption={hero.caption}
-          timer={hero.timer}
-          progress={hero.progress}
-          statusLabel={hero.statusLabel}
-          tone={hero.tone}
-          meta={hero.meta}
-        />
+        {/* Main 2-column view: Timer on Left, Day Schedule on Right */}
+        <div className="split-view">
+          <div className="split-left">
+            <CountdownCard
+              eyebrow={hero.eyebrow}
+              caption={hero.caption}
+              timer={hero.timer}
+              progress={hero.progress}
+              statusLabel={hero.statusLabel}
+              tone={hero.tone}
+              meta={hero.meta}
+            />
+          </div>
 
-        <section className="card controls" aria-label="Schedule controls">
-          <div className="controls-date">
-            <p className="controls-weekday">{WEEKDAY_NAMES[selectedDay]}</p>
-            <p className="controls-full-date">{formatLongDate(now)}</p>
+          <div className="split-right">
+            <Timeline
+              blocks={blocks}
+              lunch={lunch}
+              day={selectedDay}
+              dayType={dayType}
+              live={live}
+              nowSeconds={nowSeconds}
+            />
+          </div>
+        </div>
+
+        {/* Bottom controls: Day, Week switcher, and Lunch picks */}
+        <section className="card controls controls--bottom" aria-label="Schedule controls">
+          <div className="controls-header">
+            <div className="controls-date">
+              <span className="controls-weekday">{WEEKDAY_NAMES[selectedDay]}</span>
+              <span className="controls-full-date">{formatLongDate(now)}</span>
+            </div>
           </div>
 
           <DayStrip selected={selectedDay} todayIndex={todayIndex} onSelect={setSelectedDay} />
-          <WeekSwitcher value={weekChoice} detected={detectedWeek} onChange={setStoredWeek} />
-          <LunchPicker value={lunch} onChange={setStoredLunch} />
-        </section>
 
-        <Timeline
-          blocks={blocks}
-          lunch={lunch}
-          day={selectedDay}
-          dayType={dayType}
-          live={live}
-          nowSeconds={nowSeconds}
-        />
+          <div className="controls-pickers">
+            <WeekSwitcher value={weekChoice} detected={detectedWeek} onChange={setStoredWeek} />
+            <LunchPicker value={lunch} onChange={setStoredLunch} />
+          </div>
+        </section>
       </main>
 
+      {/* Footer with requested links and total visits counter */}
       <footer className="footer">
-        <p>
-          Bell times follow your device clock ({formatLongDate(now)}). Schedule data lives in{' '}
-          <code>src/data/schedule.ts</code>.
-        </p>
-        <p>
-          A/B rotation: A weeks put A days on Mon · Wed · Fri. Lunch shift, day and week choices are saved in this
-          browser.
-        </p>
+        <nav className="footer-links" aria-label="Schedule quick links">
+          {FOOTER_LINKS.map((link) => (
+            <a
+              key={link}
+              href="#"
+              onClick={(e) => e.preventDefault()}
+              className="footer-link"
+            >
+              {link}
+            </a>
+          ))}
+        </nav>
+
+        <div className="footer-visits">
+          <span className="visits-badge">
+            <span className="visits-dot" aria-hidden />
+            Your total visits: <strong className="visits-number">{totalVisits}</strong>
+          </span>
+        </div>
+
+        <div className="footer-notes">
+          <p>
+            Bell times follow your device clock ({formatLongDate(now)}). Schedule data lives in{' '}
+            <code>src/data/schedule.ts</code>.
+          </p>
+          <p>
+            A/B rotation: A weeks put A days on Mon · Wed · Fri. Lunch shift, day and week choices are saved in this
+            browser.
+          </p>
+        </div>
       </footer>
     </div>
   )
@@ -164,13 +226,13 @@ function describeHero(args: HeroArgs): Hero {
       const current = status.current
       const isLunch = current.kind === 'lunch'
       return {
-        eyebrow: `${current.label} · ${current.title}`,
+        eyebrow: current.label,
         caption: `${current.label} ends at ${formatClock(current.end)}`,
         timer: status.seconds,
         progress: status.progress,
         statusLabel: isLunch ? 'Lunch' : 'In session',
         tone: isLunch ? 'lunch' : 'live',
-        meta: [current.teacher, current.room, `${current.end - current.start} min`].filter(Boolean) as string[],
+        meta: [`${current.end - current.start} min`],
       }
     }
 
@@ -178,19 +240,19 @@ function describeHero(args: HeroArgs): Hero {
       const next = status.next
       return {
         eyebrow: 'Passing period',
-        caption: `${next.label} · ${next.title} starts at ${formatClock(next.start)}`,
+        caption: `${next.label} starts at ${formatClock(next.start)}`,
         timer: status.seconds,
         progress: null,
         statusLabel: 'Between bells',
         tone: 'live',
-        meta: [next.teacher, next.room].filter(Boolean) as string[],
+        meta: [],
       }
     }
 
     if (status.phase === 'before' && status.next) {
       return {
         eyebrow: `${dayName} · ${dayType} day`,
-        caption: `The first bell rings at ${formatClock(firstBell)}`,
+        caption: `First bell rings at ${formatClock(firstBell)}`,
         timer: status.seconds,
         progress: null,
         statusLabel: 'Before school',
