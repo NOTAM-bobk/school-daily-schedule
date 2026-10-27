@@ -9,6 +9,7 @@
  *     A week → Mon/Wed/Fri are A days, Tue/Thu are B days
  *     B week → Mon/Wed/Fri are B days, Tue/Thu are A days
  * · Choosing a lunch shift re-times the whole midday block for that student.
+ * · Anchor Time is a 25-minute support block that runs right after first period.
  */
 import type { LunchId, LunchOption, ScheduleBlock, Week, WeekdayIndex } from '../types'
 import { toMinutes } from '../lib/time'
@@ -52,46 +53,51 @@ const DAY_COURSES: Record<Week, readonly CourseRow[]> = {
 const HOMEROOM: CourseRow = ['Advisory', 'Ms. Chen', 'Rm 204']
 const WEDNESDAY_ADVISORY: CourseRow = ['Study Hall', 'Ms. Chen', 'Library']
 
-type SlotKey = 'HR' | 'LUNCH' | `P${1 | 2 | 3 | 4 | 5 | 6 | 7}`
+type SlotKey = 'HR' | 'ANCHOR' | 'LUNCH' | `P${1 | 2 | 3 | 4 | 5 | 6 | 7}`
 type Slot = readonly [key: SlotKey, start: string, end: string]
 
 /**
- * Bell times per lunch shift. Homeroom and the morning periods are shared;
- * everything from the midday block onwards shifts with the student's lunch.
+ * Bell times per lunch shift. Homeroom, Anchor Time and first/second period are
+ * shared; everything from the midday block onwards shifts with the student's
+ * lunch. Anchor Time (25 min) and its passing period push the rest of the day
+ * 30 minutes later than the pre-Anchor timetable — those blocks are unchanged.
  */
 const LUNCH_BELLS: Record<LunchId, readonly Slot[]> = {
   lunch1: [
     ['HR', '07:45', '07:57'],
     ['P1', '08:00', '08:47'],
-    ['P2', '08:52', '09:39'],
-    ['P3', '09:44', '10:31'],
-    ['P4', '10:36', '11:23'],
-    ['LUNCH', '11:23', '11:53'],
-    ['P5', '11:58', '12:45'],
-    ['P6', '12:50', '13:37'],
-    ['P7', '13:42', '14:29'],
+    ['ANCHOR', '08:52', '09:17'],
+    ['P2', '09:22', '10:09'],
+    ['P3', '10:14', '11:01'],
+    ['P4', '11:06', '11:53'],
+    ['LUNCH', '11:53', '12:23'],
+    ['P5', '12:28', '13:15'],
+    ['P6', '13:20', '14:07'],
+    ['P7', '14:12', '14:59'],
   ],
   lunch2: [
     ['HR', '07:45', '07:57'],
     ['P1', '08:00', '08:47'],
-    ['P2', '08:52', '09:39'],
-    ['P3', '09:44', '10:26'],
-    ['LUNCH', '10:26', '10:56'],
-    ['P4', '11:01', '11:48'],
-    ['P5', '11:53', '12:40'],
-    ['P6', '12:45', '13:32'],
-    ['P7', '13:37', '14:24'],
+    ['ANCHOR', '08:52', '09:17'],
+    ['P2', '09:22', '10:09'],
+    ['P3', '10:14', '10:56'],
+    ['LUNCH', '10:56', '11:26'],
+    ['P4', '11:31', '12:18'],
+    ['P5', '12:23', '13:10'],
+    ['P6', '13:15', '14:02'],
+    ['P7', '14:07', '14:54'],
   ],
   lunch3: [
     ['HR', '07:45', '07:57'],
     ['P1', '08:00', '08:47'],
-    ['P2', '08:52', '09:39'],
-    ['P3', '09:44', '10:26'],
-    ['P4', '10:31', '11:18'],
-    ['P5', '11:23', '12:10'],
-    ['LUNCH', '12:10', '12:40'],
-    ['P6', '12:45', '13:32'],
-    ['P7', '13:37', '14:24'],
+    ['ANCHOR', '08:52', '09:17'],
+    ['P2', '09:22', '10:09'],
+    ['P3', '10:14', '10:56'],
+    ['P4', '11:01', '11:48'],
+    ['P5', '11:53', '12:40'],
+    ['LUNCH', '12:40', '13:10'],
+    ['P6', '13:15', '14:02'],
+    ['P7', '14:07', '14:54'],
   ],
 }
 
@@ -135,6 +141,17 @@ export function buildDay(week: Week, day: WeekdayIndex, lunch: LunchId): Schedul
         label: 'Lunch',
         title: option?.name ?? 'Lunch',
         teacher: option?.detail,
+        start: startMinute,
+        end: endMinute,
+      }
+    }
+
+    if (key === 'ANCHOR') {
+      return {
+        id: `${day}-anchor`,
+        kind: 'anchor' as const,
+        label: 'Anchor Time',
+        title: 'Anchor Time',
         start: startMinute,
         end: endMinute,
       }

@@ -403,6 +403,36 @@ button {
 .lunch-name { font-size: 0.75rem; font-weight: 600; color: var(--fg-default); }
 .lunch-time { font-family: var(--font-mono); font-size: 0.65rem; color: var(--fg-secondary); white-space: nowrap; }
 
+/* Footer links */
+.footer {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: center;
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+}
+
+.footer-link {
+  font-size: 0.75rem;
+  color: var(--fg-muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.footer-link:hover {
+  color: var(--fg-default);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* Day schedule — horizontal, shadcn-style cards */
 .notice {
   margin-top: -0.75rem;
@@ -478,6 +508,13 @@ button {
 }
 
 .sched-block--next { border-color: var(--border-muted); }
+
+.sched-block--anchor {
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.08) 0%, var(--bg-card) 100%);
+  border-color: rgba(96, 165, 250, 0.35);
+}
+
+.sched-block--anchor .sched-title { color: #60a5fa; }
 
 .sched-block--lunch .sched-title { color: #fbbf24; }
 

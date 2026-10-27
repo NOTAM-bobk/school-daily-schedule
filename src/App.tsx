@@ -24,6 +24,16 @@ import type { LunchId, ScheduleBlock, Week, WeekdayIndex } from './types'
 const WEEK_KEY = 'minnetonka.week'
 const LUNCH_KEY = 'minnetonka.lunch'
 
+const FOOTER_LINKS = [
+  'AB week schedule',
+  'Daily calendar',
+  'Year calendar',
+  'Lunch',
+  'Settings',
+  'TV Panel',
+  'Admin',
+] as const
+
 interface Hero {
   eyebrow: string
   caption: string
@@ -129,6 +139,16 @@ export default function App() {
             <LunchPicker value={lunch} onChange={setStoredLunch} />
           </section>
         </main>
+
+        <footer className="footer">
+          <nav className="footer-links" aria-label="Schedule quick links">
+            {FOOTER_LINKS.map((link) => (
+              <a key={link} href="#" onClick={(e) => e.preventDefault()} className="footer-link">
+                {link}
+              </a>
+            ))}
+          </nav>
+        </footer>
       </div>
     </>
   )
