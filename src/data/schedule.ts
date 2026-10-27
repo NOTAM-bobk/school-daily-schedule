@@ -12,6 +12,7 @@
  */
 import type { LunchId, LunchOption, ScheduleBlock, Week, WeekdayIndex } from '../types'
 import { toMinutes } from '../lib/time'
+import { weekForDate } from './calendar'
 
 export const SCHOOL = {
   name: 'Minnetonka High School',
@@ -94,28 +95,13 @@ const LUNCH_BELLS: Record<LunchId, readonly Slot[]> = {
   ],
 }
 
-/** A week starts on a fixed Monday so the rotation can be derived from any date. */
-const A_WEEK_ANCHOR = new Date(2026, 7, 17) // Monday, 17 Aug 2026 → A week
-
+/** A/B week detection follows the provided 2026–27 High School calendar. */
 export function isADay(week: Week, day: WeekdayIndex): boolean {
   return week === 'A' ? day % 2 === 0 : day % 2 === 1
 }
 
 export const dayTypeFor = (week: Week, day: WeekdayIndex): Week => (isADay(week, day) ? 'A' : 'B')
-
-/** Which kind of week a date falls in, alternating weekly from the anchor. */
-export function autoWeek(date: Date): Week {
-  const weeksSinceAnchor = Math.floor(
-    (startOfMonday(date).getTime() - A_WEEK_ANCHOR.getTime()) / (7 * 86_400_000),
-  )
-  return ((weeksSinceAnchor % 2) + 2) % 2 === 0 ? 'A' : 'B'
-}
-
-function startOfMonday(date: Date): Date {
-  const monday = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
-  return monday
-}
+export const autoWeek = weekForDate
 
 /** "11:23 AM – 11:53 AM" for a lunch shift. */
 export function lunchWindow(lunch: LunchId): string {

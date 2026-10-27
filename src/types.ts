@@ -6,7 +6,7 @@ export type WeekdayIndex = 0 | 1 | 2 | 3 | 4
 
 export type LunchId = 'lunch1' | 'lunch2' | 'lunch3'
 
-export type BlockKind = 'homeroom' | 'class' | 'lunch' | 'advisory'
+export type BlockKind = 'homeroom' | 'class' | 'lunch' | 'advisory' | 'anchor'
 
 export interface ScheduleBlock {
   id: string

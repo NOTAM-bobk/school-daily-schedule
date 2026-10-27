@@ -5,6 +5,7 @@ import { LunchPicker } from './components/LunchPicker'
 import { Timeline } from './components/Timeline'
 import { WeekSwitcher, type WeekChoice } from './components/WeekSwitcher'
 import { LUNCHES, SCHOOL, autoWeek, buildDay, dayTypeFor } from './data/schedule'
+import { dateKey, isSchoolDay, noSchoolReason, nextSchoolDate, EARLY_RELEASES } from './data/calendar'
 import { useNow, useStoredState } from './lib/hooks'
 import { getDayStatus, type DayStatus } from './lib/status'
 import {
@@ -48,7 +49,10 @@ export default function App() {
   const now = useNow(1000)
   const todayKey = dayKey(now)
   const todayIndex = weekdayIndex(now)
-  const schoolToday = todayIndex <= 4
+  const schoolToday = todayIndex <= 4 && isSchoolDay(now)
+  const closureReason = noSchoolReason(now)
+  const nextSchoolDay = nextSchoolDate(now)
+  const calendarNotice = EARLY_RELEASES[dateKey(now)]
 
   const [storedWeek, setStoredWeek] = useStoredState<WeekChoice>(WEEK_KEY, 'auto')
   const [storedLunch, setStoredLunch] = useStoredState<LunchId>(LUNCH_KEY, 'lunch2')
@@ -100,6 +104,8 @@ export default function App() {
     status,
     blocks,
     dayType,
+    closureReason,
+    nextSchoolDay,
   })
 
   return (
@@ -137,6 +143,9 @@ export default function App() {
           </div>
 
           <div className="split-right">
+            {!schoolToday && <p className="card-sub calendar-notice">{closureReason === 'Weekend' ? 'Weekend · no classes today' : `${closureReason ?? 'No classes today'} · no classes today`}{nextSchoolDay ? ` Next school day: ${formatLongDate(nextSchoolDay)}` : ''}</p>}
+            {calendarNotice && schoolToday && <p className="card-sub calendar-notice">{calendarNotice}</p>}
+            {schoolToday && <p className="card-sub calendar-notice">Bell times and Anchor Time are not verified for 2026–27. The attached daily timetable is from 2024–25, so use the countdown as a placeholder until current times are provided.</p>}
             <Timeline
               blocks={blocks}
               lunch={lunch}
@@ -212,10 +221,12 @@ interface HeroArgs {
   status: DayStatus
   blocks: ScheduleBlock[]
   dayType: Week
+  closureReason: string | null
+  nextSchoolDay: Date | null
 }
 
 function describeHero(args: HeroArgs): Hero {
-  const { now, live, schoolToday, selectedDay, todayIndex, status, blocks, dayType } = args
+  const { now, live, schoolToday, selectedDay, todayIndex, status, blocks, dayType, closureReason, nextSchoolDay } = args
   const firstBell = blocks[0]?.start ?? 0
   const dayName = WEEKDAY_NAMES[selectedDay]
   const classCount = blocks.filter((block) => block.kind === 'class').length
@@ -273,14 +284,24 @@ function describeHero(args: HeroArgs): Hero {
     }
   }
 
+  if (!schoolToday) {
+    return {
+      eyebrow: closureReason ?? 'No classes today',
+      caption: `${nextSchoolDay ? `Next school day: ${formatLongDate(nextSchoolDay)}. ` : ''}Bell times are awaiting the current timetable.`,
+      timer: null,
+      progress: null,
+      statusLabel: 'No school today',
+      tone: 'off',
+      meta: [],
+    }
+  }
+
   return {
     eyebrow: `${dayName} · ${dayType} day`,
-    caption: schoolToday
-      ? `${dayName} starts at ${formatClock(firstBell)}`
-      : `No classes today — ${dayName} starts at ${formatClock(firstBell)}`,
+    caption: `${dayName} starts at ${formatClock(firstBell)}`,
     timer: secondsUntilWeekdayStart(now, selectedDay, firstBell),
     progress: null,
-    statusLabel: schoolToday ? 'Preview' : 'No school today',
+    statusLabel: 'Preview',
     tone: 'idle',
     meta: daySummary,
   }
