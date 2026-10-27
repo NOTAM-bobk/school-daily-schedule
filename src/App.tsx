@@ -118,8 +118,9 @@ export default function App() {
   }, [now, hero.timer])
 
   return (
-    <div className="page">
+    <>
       <BackgroundNoise />
+      <div className="page">
 
       <header className="topbar">
         <div className="brand">
@@ -219,6 +220,7 @@ export default function App() {
         </div>
       </footer>
     </div>
+    </>
   )
 }
 

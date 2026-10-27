@@ -3,7 +3,7 @@
   --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* Theme tokens */
-  --bg-canvas: #000000;
+  --bg-canvas: #020617;
   --bg-card: #0a0a0a;
   --bg-card-subtle: #111111;
   --bg-muted: #171717;
@@ -63,6 +63,7 @@ button {
 /* App shell - wider canvas for 2-column layout */
 .page {
   position: relative;
+  z-index: 1;
   max-width: 1060px;
   margin: 0 auto;
   padding: 2.25rem 1.5rem 4rem;
@@ -711,7 +712,7 @@ button {
 .bg-noise-container {
   position: fixed;
   inset: 0;
-  z-index: -10;
+  z-index: 0;
   background-color: #020617; /* slate-950 */
   overflow: hidden;
   pointer-events: none;
@@ -728,5 +729,7 @@ button {
 .bg-noise-canvas {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
 }

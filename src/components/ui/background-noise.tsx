@@ -30,8 +30,8 @@ export const Noise: React.FC<NoiseProps> = ({
       if (!canvas) return;
       canvas.width = canvasSize;
       canvas.height = canvasSize;
-      canvas.style.width = "100vw";
-      canvas.style.height = "100vh";
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
     };
 
     const drawGrain = () => {
