@@ -12,6 +12,7 @@ export interface CountdownCardProps {
   statusLabel: string
   tone: StatusTone
   meta: string[]
+  circleLabel?: string
 }
 
 /* Ring geometry in a 240 × 240 viewBox; the SVG scales with the dial. */
@@ -27,6 +28,7 @@ export function CountdownCard({
   statusLabel,
   tone,
   meta,
+  circleLabel = 'Class Ends in',
 }: CountdownCardProps) {
   // Full at the first bell of the period, drained to nothing at the last: the
   // ring unfills as the current class runs. Outside a period it rests, full
@@ -60,6 +62,7 @@ export function CountdownCard({
         </svg>
 
         <div className="countdown-numbers">
+          <span className="countdown-circle-label">{circleLabel}</span>
           {targetDate ? (
             <VaporCountdown targetDate={targetDate} labels={null} />
           ) : (

@@ -1,4 +1,7 @@
 import BackgroundNoise from "./components/ui/background-noise"
+import { Badge } from '@/components/ui/badge-2'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { CalendarDays, History, Sparkles } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CountdownCard, type StatusTone } from './components/CountdownCard'
 import { LunchPicker } from './components/LunchPicker'
@@ -55,6 +58,7 @@ interface Hero {
   statusLabel: string
   tone: StatusTone
   meta: string[]
+  circleLabel?: string
 }
 
 export default function App() {
@@ -208,6 +212,21 @@ export default function App() {
     setSelectedDate(dateAtOffset(days))
   }
 
+  const currentTab = selectedDateKey === dayKey(dateAtOffset(-1))
+    ? '-1'
+    : selectedDateKey === dayKey(dateAtOffset(0))
+    ? '0'
+    : selectedDateKey === dayKey(dateAtOffset(1))
+    ? '1'
+    : '0'
+
+  const handleTabChange = (val: string) => {
+    const offset = parseInt(val, 10)
+    if (!Number.isNaN(offset)) {
+      chooseDate(offset)
+    }
+  }
+
   return (
     <>
       <BackgroundNoise />
@@ -223,23 +242,27 @@ export default function App() {
               </span>
             </div>
             <nav className="date-navigation" aria-label="Schedule date and week">
-              <div className="date-segmented" role="group" aria-label="Choose schedule day">
-                {([-1, 0, 1] as const).map((offset) => {
-                  const label = offset === -1 ? 'Yesterday' : offset === 0 ? 'Today' : 'Tomorrow'
-                  const isSelected = selectedDateKey === dayKey(dateAtOffset(offset))
-                  return (
-                    <button
-                      key={offset}
-                      className={`date-segment-button${isSelected ? ' is-active' : ''}`}
-                      type="button"
-                      aria-pressed={isSelected}
-                      onClick={() => chooseDate(offset)}
-                    >
-                      {label}
-                    </button>
-                  )
-                })}
-              </div>
+              <Tabs value={currentTab} onValueChange={handleTabChange} className="date-tabs">
+                <TabsList className="grid w-full grid-cols-3 date-segmented" shape="pill">
+                  <TabsTrigger value="-1">
+                    <History className="tab-icon" aria-hidden="true" />
+                    <span>Yesterday</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="0">
+                    <Sparkles className="tab-icon" aria-hidden="true" />
+                    <span>Today</span>
+                    {live && status.current ? (
+                      <Badge variant="destructive" shape="circle" size="xs" aria-label={`Period ${status.current.label}`}>
+                        {status.current.kind === 'class' ? status.current.label : '•'}
+                      </Badge>
+                    ) : null}
+                  </TabsTrigger>
+                  <TabsTrigger value="1">
+                    <CalendarDays className="tab-icon" aria-hidden="true" />
+                    <span>Tomorrow</span>
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
               <button
                 className="week-toggle"
                 type="button"
@@ -265,6 +288,7 @@ export default function App() {
               statusLabel={hero.statusLabel}
               tone={hero.tone}
               meta={isSignMode ? [] : hero.meta}
+              circleLabel="Class Ends in"
             />
             <div className="daily-dashboard-schedule">
               {!isSignMode && notice && <p className="notice">{notice}</p>}
