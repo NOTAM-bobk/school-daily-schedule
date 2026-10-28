@@ -111,19 +111,20 @@ export function isADay(week: Week, day: WeekdayIndex): boolean {
 export const dayTypeFor = (week: Week, day: WeekdayIndex): Week => (isADay(week, day) ? 'A' : 'B')
 export const autoWeek = weekForDate
 
-/** "11:23 AM – 11:53 AM" for a lunch shift. */
-export function lunchWindow(lunch: LunchId): string {
+/** Lunch shift times in the selected clock format. */
+export function lunchWindow(lunch: LunchId, use24Hour = false): string {
   const slot = LUNCH_BELLS[lunch].find((entry) => entry[0] === 'LUNCH')
   if (!slot) return ''
-  return `${format(slot[1])} – ${format(slot[2])}`
+  return `${format(slot[1], use24Hour)} – ${format(slot[2], use24Hour)}`
 }
 
-function format(time: string): string {
+function format(time: string, use24Hour = false): string {
   const minutes = toMinutes(time)
   const hour24 = Math.floor(minutes / 60)
   const suffix = hour24 >= 12 ? 'PM' : 'AM'
   const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12
-  return `${hour12}:${String(minutes % 60).padStart(2, '0')} ${suffix}`
+  const hour = use24Hour ? String(hour24).padStart(2, '0') : String(hour12)
+  return `${hour}:${String(minutes % 60).padStart(2, '0')}${use24Hour ? '' : ` ${suffix}`}`
 }
 
 /** The full ordered timeline for one student on one day. */

@@ -1,8 +1,9 @@
 import BackgroundNoise from "./components/ui/background-noise"
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CountdownCard, type StatusTone } from './components/CountdownCard'
-import { DayStrip } from './components/DayStrip'
 import { LunchPicker } from './components/LunchPicker'
+import { SettingsDialog, type ClockFormat, type ColorTheme, type DateFormat, type DetailsChoice, type DisplayMode, type DisplaySettings, type FontChoice } from './components/SettingsDialog'
+import { DayStrip } from './components/DayStrip'
 import { Timeline } from './components/Timeline'
 import { WeekSwitcher, type WeekChoice } from './components/WeekSwitcher'
 import { LUNCHES, autoWeek, buildDay, dayTypeFor } from './data/schedule'
@@ -13,7 +14,7 @@ import {
   WEEKDAY_NAMES,
   dayKey,
   formatClock,
-  formatLongDate,
+  formatDate,
   nextSchoolWeekdayIndex,
   secondsSinceMidnight,
   secondsUntilWeekdayStart,
@@ -23,16 +24,16 @@ import type { LunchId, ScheduleBlock, Week, WeekdayIndex } from './types'
 
 const WEEK_KEY = 'minnetonka.week'
 const LUNCH_KEY = 'minnetonka.lunch'
+const DEFAULT_SETTINGS: DisplaySettings = {
+  clockFormat: '12h',
+  dateFormat: 'long',
+  font: 'ndot',
+  colorTheme: 'ocean',
+  displayMode: 'normal',
+  showCourseDetails: 'off',
+}
 
-const FOOTER_LINKS = [
-  'AB week schedule',
-  'Daily calendar',
-  'Year calendar',
-  'Lunch',
-  'Settings',
-  'TV Panel',
-  'Admin',
-] as const
+const FOOTER_LINKS = ['AB week schedule', 'Daily calendar', 'Year calendar', 'Lunch', 'TV Panel', 'Admin'] as const
 
 interface Hero {
   eyebrow: string
@@ -56,6 +57,40 @@ export default function App() {
 
   const [storedWeek, setStoredWeek] = useStoredState<WeekChoice>(WEEK_KEY, 'auto')
   const [storedLunch, setStoredLunch] = useStoredState<LunchId>(LUNCH_KEY, 'lunch2')
+  const [clockFormat, setClockFormat] = useStoredState<ClockFormat>('minnetonka.settings.clockFormat', DEFAULT_SETTINGS.clockFormat)
+  const [dateFormat, setDateFormat] = useStoredState<DateFormat>('minnetonka.settings.dateFormat', DEFAULT_SETTINGS.dateFormat)
+  const [font, setFont] = useStoredState<FontChoice>('minnetonka.settings.font', DEFAULT_SETTINGS.font)
+  const [colorTheme, setColorTheme] = useStoredState<ColorTheme>('minnetonka.settings.colorTheme', DEFAULT_SETTINGS.colorTheme)
+  const [displayMode, setDisplayMode] = useStoredState<DisplayMode>('minnetonka.settings.displayMode', DEFAULT_SETTINGS.displayMode)
+  const [showCourseDetails, setShowCourseDetails] = useStoredState<DetailsChoice>('minnetonka.settings.courseDetails', DEFAULT_SETTINGS.showCourseDetails)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const closeSettings = useCallback(() => setSettingsOpen(false), [])
+
+  const settings: DisplaySettings = { clockFormat, dateFormat, font, colorTheme, displayMode, showCourseDetails }
+  const onSettingChange = <Key extends keyof DisplaySettings>(key: Key, value: DisplaySettings[Key]) => {
+    switch (key) {
+      case 'clockFormat': setClockFormat(value as ClockFormat); break
+      case 'dateFormat': setDateFormat(value as DateFormat); break
+      case 'font': setFont(value as FontChoice); break
+      case 'colorTheme': setColorTheme(value as ColorTheme); break
+      case 'displayMode': setDisplayMode(value as DisplayMode); break
+      case 'showCourseDetails': setShowCourseDetails(value as DetailsChoice); break
+    }
+  }
+
+  const resetSettings = () => {
+    setClockFormat(DEFAULT_SETTINGS.clockFormat)
+    setDateFormat(DEFAULT_SETTINGS.dateFormat)
+    setFont(DEFAULT_SETTINGS.font)
+    setColorTheme(DEFAULT_SETTINGS.colorTheme)
+    setDisplayMode(DEFAULT_SETTINGS.displayMode)
+    setShowCourseDetails(DEFAULT_SETTINGS.showCourseDetails)
+  }
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = colorTheme
+    document.documentElement.dataset.font = font
+  }, [colorTheme, font])
 
   // Validate whatever came out of localStorage before trusting it.
   const weekChoice: WeekChoice = storedWeek === 'A' || storedWeek === 'B' ? storedWeek : 'auto'
@@ -91,6 +126,8 @@ export default function App() {
     dayType,
     closureReason,
     nextSchoolDay,
+    clockFormat,
+    dateFormat,
   })
 
   const timerTarget = useMemo(() => {
@@ -103,16 +140,19 @@ export default function App() {
 
   const notice = !schoolToday
     ? `${closureReason === 'Weekend' ? 'Weekend · no classes today' : `${closureReason ?? 'No classes today'} · no classes today`}${
-        nextSchoolDay ? ` · Next school day ${formatLongDate(nextSchoolDay)}` : ''
+        nextSchoolDay ? ` · Next school day ${formatDate(nextSchoolDay, dateFormat)}` : ''
       }`
     : (calendarNotice ?? null)
 
   return (
     <>
       <BackgroundNoise />
-      <div className="page">
+      <div className={`page${displayMode === 'tv' ? ' page--tv' : ''}`}>
         <header className="app-header">
-          <h1 className="app-mark">MHS Student Assist - {formatLongDate(now)} - Week {week}</h1>
+          <h1 className="app-mark">MHS Student Assist - {formatDate(now, dateFormat)} - Week {week}</h1>
+          <button className="settings-trigger" type="button" onClick={() => setSettingsOpen(true)} aria-haspopup="dialog">
+            Settings
+          </button>
         </header>
 
         <main className="layout">
@@ -129,19 +169,19 @@ export default function App() {
 
           {notice && <p className="notice">{notice}</p>}
 
-          <Timeline blocks={blocks} live={live} nowSeconds={nowSeconds} />
+          <Timeline blocks={blocks} live={live} nowSeconds={nowSeconds} clockFormat={clockFormat} showCourseDetails={showCourseDetails} />
 
           <section className="schedule-controls" aria-label="Schedule controls">
             <div className="controls-date">
               <span className="controls-weekday">{WEEKDAY_NAMES[selectedDay]}</span>
-              <span className="controls-full-date">{formatLongDate(now)}</span>
+              <span className="controls-full-date">{formatDate(now, dateFormat)}</span>
             </div>
 
             <div className="compact-controls">
               <DayStrip selected={selectedDay} todayIndex={todayIndex} onSelect={setSelectedDay} />
               <WeekSwitcher value={weekChoice} detected={detectedWeek} onChange={setStoredWeek} />
             </div>
-            <LunchPicker value={lunch} onChange={setStoredLunch} />
+            <LunchPicker value={lunch} onChange={setStoredLunch} clockFormat={clockFormat} />
           </section>
         </main>
 
@@ -153,9 +193,13 @@ export default function App() {
                 {link}
               </a>
             ))}
+            <button type="button" className="footer-link footer-settings" onClick={() => setSettingsOpen(true)}>Settings</button>
           </nav>
         </footer>
       </div>
+      {settingsOpen && (
+        <SettingsDialog settings={settings} onSettingChange={onSettingChange} onReset={resetSettings} onClose={closeSettings} />
+      )}
     </>
   )
 }
@@ -171,10 +215,14 @@ interface HeroArgs {
   dayType: Week
   closureReason: string | null
   nextSchoolDay: Date | null
+  clockFormat: ClockFormat
+  dateFormat: DateFormat
 }
 
 function describeHero(args: HeroArgs): Hero {
-  const { now, live, schoolToday, selectedDay, todayIndex, status, blocks, dayType, closureReason, nextSchoolDay } = args
+  const { now, live, schoolToday, selectedDay, todayIndex, status, blocks, dayType, closureReason, nextSchoolDay, clockFormat, dateFormat } = args
+  const show24Hour = clockFormat === '24h'
+  const time = (minutes: number) => formatClock(minutes, false, show24Hour)
   const firstBell = blocks[0]?.start ?? 0
   const dayName = WEEKDAY_NAMES[selectedDay]
   const classCount = blocks.filter((block) => block.kind === 'class').length
@@ -186,7 +234,7 @@ function describeHero(args: HeroArgs): Hero {
       const isLunch = current.kind === 'lunch'
       return {
         eyebrow: current.label,
-        caption: `${current.label} ends at ${formatClock(current.end)}`,
+        caption: `${current.label} ends at ${time(current.end)}`,
         timer: status.seconds,
         progress: status.progress,
         statusLabel: isLunch ? 'Lunch' : 'In session',
@@ -199,7 +247,7 @@ function describeHero(args: HeroArgs): Hero {
       const next = status.next
       return {
         eyebrow: 'Passing period',
-        caption: `${next.label} starts at ${formatClock(next.start)}`,
+        caption: `${next.label} starts at ${time(next.start)}`,
         timer: status.seconds,
         progress: null,
         statusLabel: 'Between bells',
@@ -211,7 +259,7 @@ function describeHero(args: HeroArgs): Hero {
     if (status.phase === 'before' && status.next) {
       return {
         eyebrow: `${dayName} · ${dayType} day`,
-        caption: `First bell rings at ${formatClock(firstBell)}`,
+        caption: `First bell rings at ${time(firstBell)}`,
         timer: status.seconds,
         progress: null,
         statusLabel: 'Before school',
@@ -223,7 +271,7 @@ function describeHero(args: HeroArgs): Hero {
     const nextDay = nextSchoolWeekdayIndex(todayIndex)
     return {
       eyebrow: 'School day complete',
-      caption: `Back ${WEEKDAY_NAMES[nextDay]} for the first bell at ${formatClock(firstBell)}`,
+      caption: `Back ${WEEKDAY_NAMES[nextDay]} for the first bell at ${time(firstBell)}`,
       timer: secondsUntilWeekdayStart(now, nextDay, firstBell),
       progress: null,
       statusLabel: "School's out",
@@ -235,7 +283,7 @@ function describeHero(args: HeroArgs): Hero {
   if (!schoolToday) {
     return {
       eyebrow: closureReason ?? 'No classes today',
-      caption: nextSchoolDay ? `Next school day: ${formatLongDate(nextSchoolDay)}` : 'No classes today',
+      caption: nextSchoolDay ? `Next school day: ${formatDate(nextSchoolDay, dateFormat)}` : 'No classes today',
       timer: null,
       progress: null,
       statusLabel: 'No school today',
@@ -246,7 +294,7 @@ function describeHero(args: HeroArgs): Hero {
 
   return {
     eyebrow: `${dayName} · ${dayType} day`,
-    caption: `${dayName} starts at ${formatClock(firstBell)}`,
+    caption: `${dayName} starts at ${time(firstBell)}`,
     timer: secondsUntilWeekdayStart(now, selectedDay, firstBell),
     progress: null,
     statusLabel: 'Preview',

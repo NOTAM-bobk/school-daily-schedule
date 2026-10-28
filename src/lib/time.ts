@@ -21,16 +21,17 @@ export function secondsSinceMidnight(date: Date): number {
   return date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds()
 }
 
-/** Minutes from midnight → "8:00 AM" (optionally with seconds). */
-export function formatClock(totalMinutes: number, withSeconds = false): string {
+/** Minutes from midnight to a readable time (optionally with seconds). */
+export function formatClock(totalMinutes: number, withSeconds = false, use24Hour = false): string {
   const abs = Math.abs(totalMinutes)
   const hour24 = Math.floor(abs / 60) % 24
   const minutes = Math.floor(abs % 60)
   const seconds = Math.floor((abs * 60) % 60)
   const suffix = hour24 >= 12 ? 'PM' : 'AM'
   const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12
+  const hour = use24Hour ? String(hour24).padStart(2, '0') : String(hour12)
   const ss = withSeconds ? `:${String(seconds).padStart(2, '0')}` : ''
-  return `${hour12}:${String(minutes).padStart(2, '0')}${ss} ${suffix}`
+  return `${hour}:${String(minutes).padStart(2, '0')}${ss}${use24Hour ? '' : ` ${suffix}`}`
 }
 
 /** Seconds → "04:32" or "1:04:32". */
@@ -43,21 +44,28 @@ export function formatCountdown(totalSeconds: number): string {
   return hours > 0 ? `${hours}:${pad(minutes)}:${pad(seconds)}` : `${pad(minutes)}:${pad(seconds)}`
 }
 
-const longDate = new Intl.DateTimeFormat(undefined, {
-  weekday: 'long',
-  month: 'long',
-  day: 'numeric',
-  year: 'numeric',
-})
+export type DateFormat = 'long' | 'short' | 'numeric'
 
-const shortDate = new Intl.DateTimeFormat(undefined, {
-  weekday: 'short',
-  month: 'short',
-  day: 'numeric',
-})
+const dateFormats: Record<DateFormat, Intl.DateTimeFormatOptions> = {
+  long: { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' },
+  short: { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' },
+  numeric: { month: 'numeric', day: 'numeric', year: 'numeric' },
+}
 
-export const formatLongDate = (date: Date): string => longDate.format(date)
-export const formatShortDate = (date: Date): string => shortDate.format(date)
+const formatters = new Map<DateFormat, Intl.DateTimeFormat>()
+
+function formatter(format: DateFormat): Intl.DateTimeFormat {
+  let instance = formatters.get(format)
+  if (!instance) {
+    instance = new Intl.DateTimeFormat(undefined, dateFormats[format])
+    formatters.set(format, instance)
+  }
+  return instance
+}
+
+export const formatLongDate = (date: Date): string => formatter('long').format(date)
+export const formatShortDate = (date: Date): string => formatter('short').format(date)
+export const formatDate = (date: Date, format: DateFormat): string => formatter(format).format(date)
 
 /** Stable per-day cache key, e.g. "2026-10-27" in local time. */
 export function dayKey(date: Date): string {

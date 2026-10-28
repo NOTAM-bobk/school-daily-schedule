@@ -1,12 +1,13 @@
-import type { LunchId } from '../types'
+import type { ClockFormat, LunchId } from '../types'
 import { LUNCHES, lunchWindow } from '../data/schedule'
 
 interface LunchPickerProps {
   value: LunchId
   onChange: (lunch: LunchId) => void
+  clockFormat: ClockFormat
 }
 
-export function LunchPicker({ value, onChange }: LunchPickerProps) {
+export function LunchPicker({ value, onChange, clockFormat }: LunchPickerProps) {
   return (
     <div className="lunch-picker">
       <div className="lunch-picker-label">
@@ -26,7 +27,7 @@ export function LunchPicker({ value, onChange }: LunchPickerProps) {
               onClick={() => onChange(lunch.id)}
             >
               <span className="lunch-name">{lunch.name}</span>
-              <span className="lunch-time">{lunchWindow(lunch.id)}</span>
+              <span className="lunch-time">{lunchWindow(lunch.id, clockFormat === '24h')}</span>
             </button>
           )
         })}
