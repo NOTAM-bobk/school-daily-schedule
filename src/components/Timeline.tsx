@@ -29,9 +29,7 @@ export function Timeline({ blocks, live, nowSeconds }: TimelineProps) {
                 {isNow && <span className="chip chip--live">Now</span>}
                 {isNext && <span className="chip">Next</span>}
               </div>
-              {block.kind !== 'class' && block.kind !== 'anchor' && (
-                <span className="sched-title">{block.title}</span>
-              )}
+              {block.kind !== 'anchor' && <span className="sched-title">{block.title}</span>}
               <span className="sched-time">
                 {formatClock(block.start)} – {formatClock(block.end)}
               </span>

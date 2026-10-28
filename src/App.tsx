@@ -7,7 +7,7 @@ import { Timeline } from './components/Timeline'
 import { WeekSwitcher, type WeekChoice } from './components/WeekSwitcher'
 import { LUNCHES, autoWeek, buildDay, dayTypeFor } from './data/schedule'
 import { dateKey, isSchoolDay, noSchoolReason, nextSchoolDate, EARLY_RELEASES } from './data/calendar'
-import { useNow, useStoredState } from './lib/hooks'
+import { useNow, useStoredState, useVisitCount } from './lib/hooks'
 import { getDayStatus, type DayStatus } from './lib/status'
 import {
   WEEKDAY_NAMES,
@@ -46,6 +46,7 @@ interface Hero {
 
 export default function App() {
   const now = useNow(1000)
+  const visitCount = useVisitCount()
   const todayKey = dayKey(now)
   const todayIndex = weekdayIndex(now)
   const schoolToday = todayIndex <= 4 && isSchoolDay(now)
@@ -110,7 +111,9 @@ export default function App() {
     <>
       <BackgroundNoise />
       <div className="page">
-        <p className="app-mark">MHS Student Assist App - {formatLongDate(now)}</p>
+        <header className="app-header">
+          <h1 className="app-mark">MHS Student Assist - {formatLongDate(now)} - Week {week}</h1>
+        </header>
 
         <main className="layout">
           <CountdownCard
@@ -143,6 +146,7 @@ export default function App() {
         </main>
 
         <footer className="footer">
+          <p className="visit-count">Site visits on this device <strong>{visitCount.toLocaleString()}</strong></p>
           <nav className="footer-links" aria-label="Schedule quick links">
             {FOOTER_LINKS.map((link) => (
               <a key={link} href="#" onClick={(e) => e.preventDefault()} className="footer-link">
@@ -224,7 +228,7 @@ function describeHero(args: HeroArgs): Hero {
       progress: null,
       statusLabel: "School's out",
       tone: 'off',
-      meta: [`${blocks.length} bells done`],
+      meta: [],
     }
   }
 
