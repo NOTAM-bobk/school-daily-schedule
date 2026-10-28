@@ -162,6 +162,14 @@ export default function App() {
       <BackgroundNoise />
       <div className={`page${displayMode === 'tv' ? ' page--tv' : ''}`}>
         <header className="app-header">
+          <div className="controls-date top-date-banner">
+            <span className="controls-weekday">{new Intl.DateTimeFormat(undefined, { weekday: 'long' }).format(selectedDate)}</span>
+            <span className="controls-full-date">
+              {dateFormat === 'long'
+                ? new Intl.DateTimeFormat(undefined, { month: 'long', day: 'numeric', year: 'numeric' }).format(selectedDate)
+                : formatDate(selectedDate, dateFormat)}
+            </span>
+          </div>
           <nav className="date-navigation" aria-label="Schedule date and week">
             <div className="date-segmented" role="group" aria-label="Choose schedule day">
               {([-1, 0, 1] as const).map((offset) => {
@@ -212,10 +220,6 @@ export default function App() {
           </div>
 
           <section className="schedule-controls" aria-label="Schedule controls">
-            <div className="controls-date">
-              <span className="controls-weekday">{new Intl.DateTimeFormat(undefined, { weekday: 'long' }).format(selectedDate)}</span>
-              <span className="controls-full-date">{formatDate(selectedDate, dateFormat)}</span>
-            </div>
             <LunchPicker value={lunch} onChange={setStoredLunch} clockFormat={clockFormat} />
           </section>
         </main>
