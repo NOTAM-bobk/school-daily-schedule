@@ -122,6 +122,31 @@ button {
   gap: 1.5rem;
 }
 
+.daily-dashboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  animation: dashboard-arrive 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.daily-dashboard-schedule { min-width: 0; }
+
+@keyframes dashboard-arrive {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (min-width: 980px) {
+  .page { max-width: 1400px; }
+  .daily-dashboard { grid-template-columns: minmax(20rem, 0.85fr) minmax(0, 1.15fr); }
+  .countdown-hero { text-align: left; }
+  .countdown-status { justify-content: flex-start; }
+  .countdown-dial { margin-left: 0; margin-right: auto; }
+  .countdown-caption, .countdown-meta { text-align: left; }
+}
+
+
 /* Hero / Countdown Card */
 .hero {
   position: relative;
@@ -302,36 +327,65 @@ button {
 }
 
 .date-navigation {
-  display: grid;
-  grid-template-columns: 3.5rem minmax(0, 1fr) 3.5rem;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 1rem;
 }
 
-.app-mark {
-  color: var(--fg-default);
-  font-size: clamp(1.1rem, 3vw, 1.5rem);
-  font-weight: 600;
-  line-height: 1.3;
-  text-align: center;
+.date-segmented {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  flex: 1;
+  width: min(100%, 31rem);
+  padding: 0.22rem;
+  background: color-mix(in srgb, var(--bg-card-subtle) 88%, var(--bg-canvas));
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
 }
 
-.date-navigation-button {
+.date-segment-button {
+  min-height: 2.35rem;
+  padding: 0.4rem 0.9rem;
+  color: var(--fg-muted);
+  border-radius: var(--radius-pill);
+  font: inherit;
+  font-size: 0.83rem;
+  cursor: pointer;
+  transition: color 0.16s ease, background-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.date-segment-button:hover { color: var(--fg-default); }
+.date-segment-button:active { transform: scale(0.97); }
+.date-segment-button.is-active {
+  color: var(--fg-default);
+  background: var(--bg-card);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
+  font-weight: 600;
+}
+.date-segment-button:focus-visible, .week-toggle:focus-visible { outline: 2px solid var(--accent-emerald); outline-offset: 1px; position: relative; z-index: 1; }
+
+.week-toggle {
   display: grid;
-  width: 3.5rem;
-  height: 3.5rem;
-  place-items: center;
-  color: var(--fg-secondary);
+  min-width: 7.5rem;
+  gap: 0.05rem;
+  padding: 0.38rem 1rem;
+  color: var(--fg-default);
   background: var(--bg-card);
   border: 1px solid var(--border-muted);
-  border-radius: 50%;
+  border-radius: var(--radius-pill);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
   cursor: pointer;
-  transition: background-color 0.15s ease, transform 0.15s ease;
+  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
 }
 
-.date-navigation-button:hover { background: var(--bg-hover); }
-.date-navigation-button:active { transform: scale(0.95); }
-.date-navigation-button:focus-visible { outline: 2px solid var(--accent-emerald); outline-offset: 3px; }
+.week-toggle:hover { background: var(--bg-hover); border-color: var(--border-strong); }
+.week-toggle:active { transform: scale(0.98); }
+.week-toggle-note { color: var(--fg-muted); font-size: 0.65rem; font-weight: 500; }
 
 .vc-root { position: relative; color: var(--fg-default); }
 .vc-group { font-family: var(--font-mono); color: var(--fg-default); }
@@ -677,10 +731,10 @@ button {
 
   .countdown-numbers { min-height: 4.75rem; }
   .countdown-hero { padding-inline: 0.25rem; }
-  .date-navigation { grid-template-columns: 2.75rem minmax(0, 1fr) 2.75rem; gap: 0.45rem; }
-  .date-navigation-button { width: 2.75rem; height: 2.75rem; }
-  .date-navigation-button svg { width: 32px; height: 32px; }
-  .app-mark { font-size: 0.95rem; }
+  .date-navigation { gap: 0.55rem; }
+  .date-segment-button { min-height: 2.2rem; padding-inline: 0.35rem; font-size: 0.72rem; }
+  .week-toggle { min-width: 6.2rem; padding: 0.35rem 0.55rem; font-size: 0.75rem; }
+  .week-toggle-note { font-size: 0.58rem; }
   .compact-controls { gap: 0.5rem; }
   .compact-picker { gap: 0.3rem; }
   .compact-picker select { min-width: 5.6rem; padding-left: 0.4rem; font-size: 0.7rem; }
@@ -694,6 +748,7 @@ button {
 @media (prefers-reduced-motion: reduce) {
   .vc-group span[data-vc-digit] { opacity: 1; }
   .vc-canvas { display: none; }
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
 
 /* Background Noise and Radial Spotlight */
@@ -782,7 +837,6 @@ button {
   padding-inline: 2.5rem;
 }
 
-.page--tv .app-mark { font-size: clamp(1.8rem, 3.2vw, 3rem); }
 .page--tv .countdown-hero { padding-block: 2rem; }
 .page--tv .countdown-dial { width: min(25rem, 60vw); }
 .page--tv .countdown-caption { font-size: 1.25rem; }
@@ -790,14 +844,11 @@ button {
 .page--tv .schedule-row { min-height: 6rem; padding: 1.1rem 2rem; }
 .page--tv .schedule-period-title { font-size: 1.45rem; }
 .page--tv .schedule-course-details, .page--tv .sched-time { font-size: 1rem; }
-.page--tv .date-navigation-button { width: 4rem; height: 4rem; }
+.page--tv .date-segment-button { min-height: 2.55rem; font-size: 0.9rem; }
+.page--tv .week-toggle { min-height: 3.1rem; min-width: 8rem; font-size: 1rem; }
+.page--tv .week-toggle-note { font-size: 0.72rem; }
 
-.settings-reset:hover { background: var(--bg-hover); }
-.settings-close:focus-visible, .settings-tabs button:focus-visible, .settings-reset:focus-visible {
-  outline: 2px solid var(--accent-emerald);
-  outline-offset: 3px;
-}
-
+/* One unified, switch-inspired preference panel. */
 .settings-backdrop {
   position: fixed;
   inset: 0;
@@ -805,114 +856,131 @@ button {
   display: grid;
   place-items: center;
   padding: 1.25rem;
-  background: rgba(2, 6, 23, 0.78);
-  backdrop-filter: blur(7px);
+  background: rgba(2, 6, 23, 0.72);
+  backdrop-filter: blur(6px);
+  animation: settings-fade-in 180ms ease both;
 }
 
+@keyframes settings-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
 .settings-dialog {
-  display: grid;
-  grid-template-columns: minmax(13rem, 0.32fr) minmax(0, 1fr);
-  width: min(1040px, 96vw);
-  height: min(780px, 92vh);
-  min-height: 30rem;
+  display: flex;
+  width: min(760px, 94vw);
+  max-height: min(820px, 92vh);
+  flex-direction: column;
   overflow: hidden;
   background: var(--bg-card);
   border: 1px solid var(--border-muted);
-  border-radius: 20px;
-  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.48);
+  border-radius: 18px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.4);
+  animation: settings-rise-in 220ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
-.settings-sidebar {
-  display: flex;
-  flex-direction: column;
-  padding: 2rem 1.15rem 1.25rem;
-  background: color-mix(in srgb, var(--bg-canvas) 45%, var(--bg-card));
-  border-right: 1px solid var(--border-subtle);
-}
+@keyframes settings-rise-in { from { opacity: 0; transform: translateY(8px) scale(0.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-.settings-sidebar-heading { padding: 0 0.75rem 1.75rem; }
-.settings-sidebar-heading h2 { font-size: 1.35rem; line-height: 1.25; }
-.settings-sidebar-heading p, .settings-saved-note { color: var(--fg-muted); font-size: 0.82rem; }
-.settings-sidebar-heading p { margin-top: 0.4rem; }
-.settings-tabs { display: grid; gap: 0.4rem; }
-
-.settings-tabs button {
-  width: 100%;
-  padding: 0.8rem 0.75rem;
-  color: var(--fg-secondary);
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.settings-tabs button[aria-selected='true'] {
-  color: var(--fg-default);
-  background: var(--bg-hover);
-  border-color: var(--border-subtle);
-}
-
-.settings-saved-note { margin: auto 0.75rem 0; }
-.settings-content { display: flex; min-width: 0; flex-direction: column; }
-.settings-content-header {
+.settings-dialog-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 6.5rem;
-  padding: 1.25rem 2rem;
-  border-bottom: 1px solid var(--border-subtle);
+  gap: 1rem;
+  padding: 1.5rem 1.6rem 1.15rem;
 }
 
-.settings-kicker { margin-bottom: 0.25rem; color: var(--fg-muted); font-size: 0.75rem; }
-.settings-content-header h3 { font-size: 1.45rem; }
+.settings-dialog-header h2 { color: var(--fg-default); font-size: 1.4rem; line-height: 1.2; }
+.settings-dialog-header p { margin-top: 0.35rem; color: var(--fg-muted); font-size: 0.82rem; }
 .settings-close {
   display: grid;
-  width: 2.7rem;
-  height: 2.7rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
   place-items: center;
   color: var(--fg-secondary);
   background: var(--bg-card-subtle);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border-radius: 50%;
   font: inherit;
-  font-size: 1.75rem;
+  font-size: 1.6rem;
   line-height: 1;
   cursor: pointer;
+  transition: background-color 0.18s ease, transform 0.18s ease;
 }
 
-.settings-panel { overflow-y: auto; padding: 1.5rem 2rem 2rem; }
-.settings-group { max-width: 720px; }
-.setting-row, .settings-row {
+.settings-close:hover { background: var(--bg-hover); transform: rotate(4deg); }
+.settings-close:focus-visible, .settings-reset:focus-visible, .setting-row select:focus-visible, .setting-checkbox:focus-visible {
+  outline: 2px solid var(--accent-emerald);
+  outline-offset: 3px;
+}
+
+.settings-panel {
+  display: grid;
+  gap: 0;
+  overflow: auto;
+  margin: 0 1.6rem 1.6rem;
+  padding: 0 1rem;
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.14);
+}
+
+.setting-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
-  min-height: 5.6rem;
-  padding: 1.1rem 0;
+  gap: 1.25rem;
+  min-height: 4.75rem;
+  padding: 0.85rem 0.2rem;
   border-bottom: 1px solid var(--border-subtle);
 }
 
-.setting-row > span, .settings-row > span { display: grid; gap: 0.35rem; }
-.setting-row strong, .settings-row strong { color: var(--fg-default); font-size: 0.95rem; }
-.setting-row small, .settings-row small { color: var(--fg-muted); font-size: 0.8rem; line-height: 1.45; }
+.setting-row:last-child { border-bottom: 0; }
+.setting-row > span { display: grid; gap: 0.25rem; }
+.setting-row strong { color: var(--fg-default); font-size: 0.95rem; }
+.setting-row small { color: var(--fg-muted); font-size: 0.78rem; line-height: 1.4; }
 .setting-row select, .settings-reset {
   flex: 0 0 auto;
-  min-height: 2.65rem;
-  padding: 0.45rem 0.75rem;
+  min-height: 2.45rem;
+  max-width: 15rem;
+  padding: 0.35rem 0.7rem;
   color: var(--fg-default);
-  background: var(--bg-card-subtle);
+  background: var(--bg-card);
   border: 1px solid var(--border-muted);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-pill);
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
 }
 
-.setting-row select { max-width: 15rem; cursor: pointer; }
-.setting-row select:focus-visible, .setting-checkbox:focus-visible, .settings-panel:focus-visible { outline: 2px solid var(--accent-emerald); outline-offset: 3px; }
-.setting-checkbox { width: 1.35rem; height: 1.35rem; accent-color: var(--accent-emerald); cursor: pointer; }
-.settings-reset { cursor: pointer; }
+.setting-row select { cursor: pointer; }
+.setting-checkbox {
+  position: relative;
+  width: 3rem;
+  height: 1.7rem;
+  flex: 0 0 auto;
+  appearance: none;
+  background: #e5e7eb;
+  border: 0;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: background-color 180ms ease;
+}
+
+.setting-checkbox::before {
+  position: absolute;
+  top: 0.16rem;
+  left: 0.16rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  content: '';
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+  transition: transform 180ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.setting-checkbox:checked { background: #171717; }
+.setting-checkbox:checked::before { transform: translateX(1.28rem); }
+.settings-reset { cursor: pointer; transition: background-color 160ms ease; }
+.settings-reset:hover { background: var(--bg-hover); }
 
 /* Bell list uses a period column, course information and a right-aligned time column. */
 .schedule-card {
@@ -980,21 +1048,20 @@ button {
 
 .footer-settings { padding: 0; background: transparent; border: 0; cursor: pointer; }
 
+@media (prefers-reduced-motion: reduce) {
+  .daily-dashboard, .settings-backdrop, .settings-dialog { animation: none; }
+}
+
 @media (max-width: 640px) {
   .settings-backdrop { padding: 0; }
-  .settings-dialog { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); width: 100%; height: 100%; min-height: 0; border: 0; border-radius: 0; }
-  .settings-sidebar { padding: 1.2rem 1rem 0.65rem; border-right: 0; border-bottom: 1px solid var(--border-subtle); }
-  .settings-sidebar-heading { padding: 0 0.25rem 0.8rem; }
-  .settings-sidebar-heading h2 { font-size: 1.15rem; }
-  .settings-sidebar-heading p, .settings-saved-note { display: none; }
-  .settings-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .settings-tabs button { padding: 0.65rem 0.35rem; font-size: 0.8rem; text-align: center; }
-  .settings-content-header { min-height: 5rem; padding: 0.8rem 1rem; }
-  .settings-content-header h3 { font-size: 1.2rem; }
-  .settings-panel { padding: 0.6rem 1rem 1.5rem; }
-  .setting-row, .settings-row { gap: 0.75rem; min-height: 5rem; }
-  .setting-row select { max-width: 45%; font-size: 0.73rem; }
-  .setting-row small, .settings-row small { max-width: 15rem; }
+  .settings-dialog { width: 100%; height: 100%; border: 0; border-radius: 0; }
+  .settings-dialog-header { padding: 1.2rem 1rem 0.9rem; }
+  .settings-dialog-header h2 { font-size: 1.2rem; }
+  .settings-dialog-header p { font-size: 0.75rem; }
+  .settings-panel { padding: 0.8rem 1rem 1.5rem; }
+  .setting-row { gap: 0.75rem; min-height: 4.65rem; padding: 0.8rem 0.9rem; }
+  .setting-row select { max-width: 44%; min-height: 2.35rem; padding-inline: 0.55rem; font-size: 0.72rem; }
+  .setting-row small { max-width: 15rem; }
   .schedule-card { border-radius: 12px; }
   .schedule-table-header, .schedule-row { grid-template-columns: minmax(0, 1fr) auto; column-gap: 0.5rem; }
   .schedule-table-header, .schedule-row { padding-right: 0.85rem; padding-left: 0.85rem; }

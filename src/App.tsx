@@ -4,7 +4,7 @@ import { CountdownCard, type StatusTone } from './components/CountdownCard'
 import { LunchPicker } from './components/LunchPicker'
 import { SettingsDialog, type ClockFormat, type ColorTheme, type DateFormat, type DetailsChoice, type DisplayMode, type DisplaySettings, type FontChoice, type GlowColor } from './components/SettingsDialog'
 import { Timeline } from './components/Timeline'
-import { WeekSwitcher, type WeekChoice } from './components/WeekSwitcher'
+import type { WeekChoice } from './components/WeekSwitcher'
 import { LUNCHES, autoWeek, buildDay, dayTypeFor } from './data/schedule'
 import { isSchoolDay, noSchoolReason, nextSchoolDate, EARLY_RELEASES } from './data/calendar'
 import { useNow, useStoredState, useVisitCount } from './lib/hooks'
@@ -14,7 +14,6 @@ import {
   dayKey,
   formatClock,
   formatDate,
-  nextSchoolWeekdayIndex,
   secondsSinceMidnight,
   secondsUntilWeekdayStart,
   weekdayIndex,
@@ -49,10 +48,10 @@ export default function App() {
   const now = useNow(1000)
   const visitCount = useVisitCount()
   const todayKey = dayKey(now)
-  const todayIndex = weekdayIndex(now)
   const [selectedDate, setSelectedDate] = useState(() => new Date(now.getFullYear(), now.getMonth(), now.getDate()))
   const viewingCurrentDate = useRef(true)
   const selectedDateKey = dayKey(selectedDate)
+  const dateAtOffset = (days: number) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + days)
   const calendarDayIndex = weekdayIndex(selectedDate)
   const selectedDay = (calendarDayIndex === 5 ? 4 : calendarDayIndex === 6 ? 0 : calendarDayIndex) as WeekdayIndex
   const schoolToday = isSchoolDay(selectedDate)
@@ -104,7 +103,7 @@ export default function App() {
   // Validate whatever came out of localStorage before trusting it.
   const weekChoice: WeekChoice = storedWeek === 'A' || storedWeek === 'B' ? storedWeek : 'auto'
   const lunch: LunchId = LUNCHES.some((entry) => entry.id === storedLunch) ? storedLunch : 'lunch2'
-  const updateWeek = (choice: WeekChoice) => setStoredWeek(choice)
+  const toggleWeek = () => setStoredWeek(weekChoice === 'auto' ? (week === 'A' ? 'B' : 'A') : weekChoice === 'A' ? 'B' : 'A')
 
   // Keep following the real calendar at midnight unless the viewer is paging through another date.
   useEffect(() => {
@@ -129,7 +128,6 @@ export default function App() {
     schoolToday,
     selectedSchoolDay,
     selectedDay,
-    todayIndex,
     status,
     blocks,
     dayType,
@@ -154,10 +152,9 @@ export default function App() {
       }`
     : (calendarNotice ?? null)
 
-  const changeDate = (days: number) => {
-    const nextDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() + days)
-    viewingCurrentDate.current = dayKey(nextDate) === todayKey
-    setSelectedDate(nextDate)
+  const chooseDate = (days: number) => {
+    viewingCurrentDate.current = days === 0
+    setSelectedDate(dateAtOffset(days))
   }
 
   return (
@@ -165,41 +162,59 @@ export default function App() {
       <BackgroundNoise />
       <div className={`page${displayMode === 'tv' ? ' page--tv' : ''}`}>
         <header className="app-header">
-          <nav className="date-navigation" aria-label="Change schedule date">
-            <button className="date-navigation-button" type="button" onClick={() => changeDate(-1)} aria-label="Go to yesterday" title="Yesterday">
-              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="m22.5 12.85-7 7.15 7 7.15" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            </button>
-            <h1 className="app-mark">MHS Student Assist - {formatDate(selectedDate, dateFormat)} - Week {week}</h1>
-            <button className="date-navigation-button" type="button" onClick={() => changeDate(1)} aria-label="Go to tomorrow" title="Tomorrow">
-              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="m17.5 12.85 7 7.15-7 7.15" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          <nav className="date-navigation" aria-label="Schedule date and week">
+            <div className="date-segmented" role="group" aria-label="Choose schedule day">
+              {([-1, 0, 1] as const).map((offset) => {
+                const label = offset === -1 ? 'Yesterday' : offset === 0 ? 'Today' : 'Tomorrow'
+                const isSelected = selectedDateKey === dayKey(dateAtOffset(offset))
+                return (
+                  <button
+                    key={offset}
+                    className={`date-segment-button${isSelected ? ' is-active' : ''}`}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() => chooseDate(offset)}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+            <button
+              className="week-toggle"
+              type="button"
+              onClick={toggleWeek}
+              aria-label={`Week ${week}${weekChoice === 'auto' ? ' is the calendar default' : ` selected; the calendar default is Week ${detectedWeek}`}. Switch to Week ${week === 'A' ? 'B' : 'A'}.`}
+              title={weekChoice === 'auto' ? 'Using the calendar default' : `Calendar default: Week ${detectedWeek}`}
+            >
+              <span>Week {week}</span>
+              <span className="week-toggle-note">{weekChoice === 'auto' ? 'Default week' : `Default: Week ${detectedWeek}`}</span>
             </button>
           </nav>
         </header>
 
         <main className="layout">
-          <CountdownCard
-            eyebrow={hero.eyebrow}
-            caption={hero.caption}
-            timer={hero.timer}
-            targetDate={timerTarget}
-            progress={hero.progress}
-            statusLabel={hero.statusLabel}
-            tone={hero.tone}
-            meta={hero.meta}
-          />
-
-          {notice && <p className="notice">{notice}</p>}
-
-          <Timeline blocks={blocks} live={live} nowSeconds={nowSeconds} clockFormat={clockFormat} showCourseDetails={showCourseDetails} />
+          <div className="daily-dashboard" key={`${selectedDateKey}-${week}-${lunch}`}>
+            <CountdownCard
+              eyebrow={hero.eyebrow}
+              caption={hero.caption}
+              timer={hero.timer}
+              targetDate={timerTarget}
+              progress={hero.progress}
+              statusLabel={hero.statusLabel}
+              tone={hero.tone}
+              meta={hero.meta}
+            />
+            <div className="daily-dashboard-schedule">
+              {notice && <p className="notice">{notice}</p>}
+              <Timeline blocks={blocks} live={live} nowSeconds={nowSeconds} clockFormat={clockFormat} showCourseDetails={showCourseDetails} />
+            </div>
+          </div>
 
           <section className="schedule-controls" aria-label="Schedule controls">
             <div className="controls-date">
               <span className="controls-weekday">{new Intl.DateTimeFormat(undefined, { weekday: 'long' }).format(selectedDate)}</span>
               <span className="controls-full-date">{formatDate(selectedDate, dateFormat)}</span>
-            </div>
-
-            <div className="compact-controls">
-              <WeekSwitcher value={weekChoice} detected={detectedWeek} onChange={updateWeek} />
             </div>
             <LunchPicker value={lunch} onChange={setStoredLunch} clockFormat={clockFormat} />
           </section>
@@ -213,6 +228,14 @@ export default function App() {
                 {link}
               </a>
             ))}
+            <a
+              className="footer-link"
+              href="https://docs.google.com/forms/d/e/1FAIpQLSfJyrglqlKc2nvIQoHHsO_u2MrxL5M6dZRB0WlpX2HZbpEzJw/viewform"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Bug report
+            </a>
             <button type="button" className="footer-link footer-settings" onClick={() => setSettingsOpen(true)}>Settings</button>
           </nav>
         </footer>
@@ -230,7 +253,6 @@ interface HeroArgs {
   schoolToday: boolean
   selectedSchoolDay: boolean
   selectedDay: WeekdayIndex
-  todayIndex: number
   status: DayStatus
   blocks: ScheduleBlock[]
   dayType: Week
@@ -241,13 +263,11 @@ interface HeroArgs {
 }
 
 function describeHero(args: HeroArgs): Hero {
-  const { now, live, schoolToday, selectedSchoolDay, selectedDay, todayIndex, status, blocks, dayType, closureReason, nextSchoolDay, clockFormat, dateFormat } = args
+  const { now, live, schoolToday, selectedSchoolDay, selectedDay, status, blocks, dayType, closureReason, nextSchoolDay, clockFormat, dateFormat } = args
   const show24Hour = clockFormat === '24h'
   const time = (minutes: number) => formatClock(minutes, false, show24Hour)
   const firstBell = blocks[0]?.start ?? 0
   const dayName = WEEKDAY_NAMES[selectedDay]
-  const classCount = blocks.filter((block) => block.kind === 'class').length
-  const daySummary = [`${blocks.length} bells`, `${classCount} classes`]
 
   if (live) {
     if (status.phase === 'in' && status.current) {
@@ -285,14 +305,13 @@ function describeHero(args: HeroArgs): Hero {
         progress: null,
         statusLabel: 'Before school',
         tone: 'idle',
-        meta: daySummary,
+        meta: [],
       }
     }
 
-    const nextDay = nextSchoolWeekdayIndex(todayIndex)
     return {
       eyebrow: 'School day complete',
-      caption: `Back ${WEEKDAY_NAMES[nextDay]} for the first bell at ${time(firstBell)}`,
+      caption: 'Classes have ended for today.',
       timer: 0,
       progress: null,
       statusLabel: "School's out",
@@ -321,7 +340,7 @@ function describeHero(args: HeroArgs): Hero {
       progress: null,
       statusLabel: 'Preview',
       tone: 'idle',
-      meta: daySummary,
+      meta: [],
     }
   }
 
@@ -332,6 +351,6 @@ function describeHero(args: HeroArgs): Hero {
     progress: null,
     statusLabel: 'Preview',
     tone: 'idle',
-    meta: daySummary,
+    meta: [],
   }
 }
