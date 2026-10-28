@@ -63,7 +63,7 @@ export function VaporCountdown({
   labels = DEFAULT_LABELS,
   className = "",
 }: {
-  /** countdown target — Date, ISO string, or epoch ms; defaults to 24h from mount */
+  /** countdown target — Date, ISO string, or epoch ms; null/epoch zero holds at 00:00:00 */
   targetDate?: Date | string | number | null;
   /** mono labels under the HH / MM / SS groups; null hides the row */
   labels?: readonly [string, string, string] | null;
@@ -106,8 +106,10 @@ export function VaporCountdown({
       if (targetMs == null) return 0;
       return Math.max(0, targetMs - Date.now());
     };
+    const noCountdown = targetMs == null || targetMs <= 0;
 
     const toDigits = () => {
+      if (noCountdown) return '000000';
       const rem = Math.round(remaining() / 1000);
       const h = Math.min(99, Math.floor(rem / 3600));
       const m = Math.floor((rem % 3600) / 60);
@@ -123,6 +125,7 @@ export function VaporCountdown({
         "datetime",
         `PT${digits.slice(0, 2)}H${digits.slice(2, 4)}M${digits.slice(4)}S`
       );
+      timeEl.setAttribute('aria-label', `${digits.slice(0, 2)} hours ${digits.slice(2, 4)} minutes ${digits.slice(4)} seconds remaining`);
     };
 
     // ---- canvas / particle state (unused under reduced motion) -------------
@@ -134,7 +137,13 @@ export function VaporCountdown({
     const updateGrainColor = () => {
       grainColor = getComputedStyle(digitEls[0]).color || grainColor;
     };
+    const updateGlowColor = () => {
+      const glow = getComputedStyle(document.documentElement).getPropertyValue('--pixel-glow').trim()
+      root.style.setProperty('--digit-glow', glow || 'rgba(14, 116, 144, 0.3)')
+      canvas.style.filter = `drop-shadow(0 0 18px ${glow || 'rgba(14, 116, 144, 0.3)'})`
+    };
     updateGrainColor();
+    updateGlowColor();
 
     const slots: Slot[] = Array.from({ length: 6 }, () => ({
       g: new Float32Array(MAX_GRAINS * FLOATS),
@@ -434,13 +443,13 @@ export function VaporCountdown({
         applyDateTime();
         if (!reduced) wake();
       }
-      if (remaining() > 0) schedule();
+      if (!noCountdown && remaining() > 0) schedule();
     };
 
     digits = toDigits();
     for (let s = 0; s < 6; s++) digitEls[s].textContent = digits.charAt(s);
     applyDateTime();
-    if (remaining() > 0) schedule();
+    if (!noCountdown && remaining() > 0) schedule();
 
     if (reduced || !ctx) {
       // reduced motion: canvas stays hidden (CSS), the real <time> is visible
@@ -469,12 +478,13 @@ export function VaporCountdown({
     // documentElement, and OS-level scheme changes fire through matchMedia.
     const onThemeChange = () => {
       updateGrainColor();
+      updateGlowColor();
       wake();
     };
     const mo = new MutationObserver(onThemeChange);
     mo.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ["class", "data-theme"],
+      attributeFilter: ["class", "data-theme", "data-glow"],
     });
     const colorScheme = window.matchMedia("(prefers-color-scheme: dark)");
     colorScheme.addEventListener("change", onThemeChange);
@@ -500,6 +510,7 @@ export function VaporCountdown({
         columnGap: "0.45em",
         rowGap: "0.75rem",
         fontSize: "clamp(2.75rem, 7vw, 4.75rem)",
+        textShadow: "0 0 24px var(--digit-glow, transparent)",
       }}
     >
       {/* real element: screen-reader truth; visible static under reduced motion */}
@@ -549,6 +560,7 @@ export function VaporCountdown({
           top: -PAD_TOP,
           width: `calc(100% + ${PAD_X * 2}px)`,
           height: `calc(100% + ${PAD_TOP + PAD_BOTTOM}px)`,
+          filter: 'drop-shadow(0 0 18px var(--pixel-glow, rgba(14, 116, 144, 0.3)))',
         }}
       />
     </div>

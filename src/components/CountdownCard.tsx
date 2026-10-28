@@ -63,9 +63,7 @@ export function CountdownCard({
           {targetDate ? (
             <VaporCountdown targetDate={targetDate} labels={null} />
           ) : (
-            <time className="empty-countdown" aria-label="No countdown today">
-              —:—
-            </time>
+            <time className="empty-countdown" aria-label="No countdown today">00:00:00</time>
           )}
         </div>
       </div>

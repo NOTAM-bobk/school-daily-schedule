@@ -6,6 +6,7 @@ import type {
   DisplayMode,
   DisplaySettings,
   FontChoice,
+  GlowColor,
 } from '../types'
 
 export type {
@@ -16,6 +17,7 @@ export type {
   DisplayMode,
   DisplaySettings,
   FontChoice,
+  GlowColor,
 } from '../types'
 
 interface SettingsDialogProps {
@@ -191,6 +193,20 @@ export function SettingsDialog({ settings, onSettingChange, onReset, onClose }: 
                     <option value="ocean">Ocean blue</option>
                     <option value="violet">Violet</option>
                     <option value="light">Light</option>
+                  </select>
+                </label>
+                <label className="setting-row" htmlFor="settings-glow-color">
+                  <span><strong>Pixel glow color</strong><small>Change the color of the animated background glow.</small></span>
+                  <select
+                    id="settings-glow-color"
+                    value={settings.glowColor}
+                    onChange={(event) => onSettingChange('glowColor', event.target.value as GlowColor)}
+                  >
+                    <option value="teal">Teal</option>
+                    <option value="blue">Blue</option>
+                    <option value="violet">Violet</option>
+                    <option value="amber">Amber</option>
+                    <option value="rose">Rose</option>
                   </select>
                 </label>
                 <label className="setting-row" htmlFor="settings-display-mode">

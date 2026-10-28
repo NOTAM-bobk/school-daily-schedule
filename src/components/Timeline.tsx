@@ -35,7 +35,6 @@ export function Timeline({ blocks, live, nowSeconds, clockFormat, showCourseDeta
                 <div className="schedule-period-copy">
                   <span className="schedule-period-title">
                     {block.kind === 'class' ? block.label : block.title}
-                    {block.kind === 'class' && <span className="schedule-course-name">{block.title}</span>}
                   </span>
                   {showCourseDetails === 'on' && block.kind === 'class' && (block.teacher || block.room) && (
                     <span className="schedule-course-details">{[block.teacher, block.room].filter(Boolean).join(' · ')}</span>

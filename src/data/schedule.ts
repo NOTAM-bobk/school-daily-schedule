@@ -1,17 +1,3 @@
-/**
- * The whole school schedule lives in this file — edit it here, nothing else.
- *
- * Model
- * -----
- * · Students follow a 7-period day (plus homeroom), with three staggered lunch shifts.
- * · Every day is either an "A day" or a "B day"; A days and B days take different courses.
- * · The A/B *week* decides which weekdays are which kind of day:
- *     A week → Mon/Wed/Fri are A days, Tue/Thu are B days
- *     B week → Mon/Wed/Fri are B days, Tue/Thu are A days
- * · Choosing a lunch shift re-times the whole midday block for that student.
- * · Anchor Time is a 25-minute support block that runs right after first period.
- * · The day runs 8:00 AM – 2:40 PM, whichever lunch shift a student picks.
- */
 import type { LunchId, LunchOption, ScheduleBlock, Week, WeekdayIndex } from '../types'
 import { toMinutes } from '../lib/time'
 import { weekForDate } from './calendar'
@@ -29,7 +15,7 @@ export const LUNCHES: readonly LunchOption[] = [
 
 type CourseRow = readonly [title: string, teacher: string, room: string]
 
-/** Periods 1–7 for each kind of day. Add electives or swap teachers freely. */
+/** Periods 1–7 for each kind of day. */
 const DAY_COURSES: Record<Week, readonly CourseRow[]> = {
   A: [
     ['Algebra II', 'Ms. Rivera', 'Rm 204'],
@@ -51,22 +37,12 @@ const DAY_COURSES: Record<Week, readonly CourseRow[]> = {
   ],
 }
 
-const HOMEROOM: CourseRow = ['Advisory', 'Ms. Chen', 'Rm 204']
-const WEDNESDAY_ADVISORY: CourseRow = ['Study Hall', 'Ms. Chen', 'Library']
-
-type SlotKey = 'HR' | 'ANCHOR' | 'LUNCH' | `P${1 | 2 | 3 | 4 | 5 | 6 | 7}`
+type SlotKey = 'ANCHOR' | 'LUNCH' | `P${1 | 2 | 3 | 4 | 5 | 6 | 7}`
 type Slot = readonly [key: SlotKey, start: string, end: string]
 
-/**
- * Bell times per lunch shift for the 8:00 AM – 2:40 PM day. Homeroom, Anchor
- * Time and the morning periods are shared; the midday block and everything after
- * it shifts with the student's lunch. Every shift adds up to the same 400
- * minutes: homeroom (11) + seven 42-minute periods + Anchor Time (25) + lunch
- * (30) + eight five-minute passing periods.
- */
+/** Existing bell times, with the advisory/homeroom row omitted from the display. */
 const LUNCH_BELLS: Record<LunchId, readonly Slot[]> = {
   lunch1: [
-    ['HR', '08:00', '08:11'],
     ['P1', '08:16', '08:58'],
     ['ANCHOR', '09:03', '09:28'],
     ['P2', '09:33', '10:15'],
@@ -78,7 +54,6 @@ const LUNCH_BELLS: Record<LunchId, readonly Slot[]> = {
     ['P7', '13:58', '14:40'],
   ],
   lunch2: [
-    ['HR', '08:00', '08:11'],
     ['P1', '08:16', '08:58'],
     ['ANCHOR', '09:03', '09:28'],
     ['P2', '09:33', '10:15'],
@@ -90,7 +65,6 @@ const LUNCH_BELLS: Record<LunchId, readonly Slot[]> = {
     ['P7', '13:58', '14:40'],
   ],
   lunch3: [
-    ['HR', '08:00', '08:11'],
     ['P1', '08:16', '08:58'],
     ['ANCHOR', '09:03', '09:28'],
     ['P2', '09:33', '10:15'],
@@ -103,7 +77,6 @@ const LUNCH_BELLS: Record<LunchId, readonly Slot[]> = {
   ],
 }
 
-/** A/B week detection follows the provided 2026–27 High School calendar. */
 export function isADay(week: Week, day: WeekdayIndex): boolean {
   return week === 'A' ? day % 2 === 0 : day % 2 === 1
 }
@@ -111,7 +84,6 @@ export function isADay(week: Week, day: WeekdayIndex): boolean {
 export const dayTypeFor = (week: Week, day: WeekdayIndex): Week => (isADay(week, day) ? 'A' : 'B')
 export const autoWeek = weekForDate
 
-/** Lunch shift times in the selected clock format. */
 export function lunchWindow(lunch: LunchId, use24Hour = false): string {
   const slot = LUNCH_BELLS[lunch].find((entry) => entry[0] === 'LUNCH')
   if (!slot) return ''
@@ -127,12 +99,10 @@ function format(time: string, use24Hour = false): string {
   return `${hour}:${String(minutes % 60).padStart(2, '0')}${use24Hour ? '' : ` ${suffix}`}`
 }
 
-/** The full ordered timeline for one student on one day. */
 export function buildDay(week: Week, day: WeekdayIndex, lunch: LunchId): ScheduleBlock[] {
   const courses = DAY_COURSES[dayTypeFor(week, day)]
-  const isWednesday = day === 2
 
-  return LUNCH_BELLS[lunch].map(([key, start, end]) => {
+  const periods = LUNCH_BELLS[lunch].map(([key, start, end]) => {
     const startMinute = toMinutes(start)
     const endMinute = toMinutes(end)
 
@@ -160,27 +130,11 @@ export function buildDay(week: Week, day: WeekdayIndex, lunch: LunchId): Schedul
       }
     }
 
-    if (key === 'HR') {
-      return {
-        id: `${day}-hr`,
-        kind: 'homeroom' as const,
-        label: 'Homeroom',
-        title: HOMEROOM[0],
-        teacher: HOMEROOM[1],
-        room: HOMEROOM[2],
-        start: startMinute,
-        end: endMinute,
-      }
-    }
-
     const period = Number(key.slice(1))
-    // Wednesday swaps the last period for a school-wide study hall.
-    const [title, teacher, room] =
-      isWednesday && period === 7 ? WEDNESDAY_ADVISORY : courses[period - 1]
-
+    const [title, teacher, room] = courses[period - 1]
     return {
       id: `${day}-p${period}`,
-      kind: isWednesday && period === 7 ? ('advisory' as const) : ('class' as const),
+      kind: 'class' as const,
       label: `Period ${period}`,
       title,
       teacher,
@@ -189,4 +143,6 @@ export function buildDay(week: Week, day: WeekdayIndex, lunch: LunchId): Schedul
       end: endMinute,
     }
   })
+
+  return periods
 }

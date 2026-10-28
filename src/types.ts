@@ -12,6 +12,7 @@ export type FontChoice = 'ndot' | 'geist' | 'system'
 export type ColorTheme = 'ocean' | 'violet' | 'light'
 export type DisplayMode = 'normal' | 'tv'
 export type DetailsChoice = 'on' | 'off'
+export type GlowColor = 'teal' | 'blue' | 'violet' | 'amber' | 'rose'
 
 export interface DisplaySettings {
   clockFormat: ClockFormat
@@ -20,6 +21,7 @@ export interface DisplaySettings {
   colorTheme: ColorTheme
   displayMode: DisplayMode
   showCourseDetails: DetailsChoice
+  glowColor: GlowColor
 }
 
 export type BlockKind = 'homeroom' | 'class' | 'lunch' | 'advisory' | 'anchor'
@@ -27,7 +29,7 @@ export type BlockKind = 'homeroom' | 'class' | 'lunch' | 'advisory' | 'anchor'
 export interface ScheduleBlock {
   id: string
   kind: BlockKind
-  /** Bell label, e.g. "Period 3" or "Homeroom". */
+  /** Bell label, e.g. "Period 3" or "Anchor Time". */
   label: string
   /** What the student is actually doing, e.g. "Chemistry". */
   title: string
