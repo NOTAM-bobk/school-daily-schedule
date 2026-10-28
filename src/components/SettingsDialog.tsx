@@ -12,6 +12,17 @@ export type {
   GlowColor,
 } from '../types'
 
+/* Font picker labels render in their own typeface where the browser allows it. */
+const FONT_OPTIONS: { value: FontChoice; label: string; stack: string }[] = [
+  { value: 'ndot', label: 'Ndot 55 · dot matrix', stack: "'Ndot 55'" },
+  { value: 'geist', label: 'Geist · clean sans', stack: "'Geist'" },
+  { value: 'grotesk', label: 'Space Grotesk · modern', stack: "'Space Grotesk'" },
+  { value: 'orbitron', label: 'Orbitron · sci-fi', stack: "'Orbitron'" },
+  { value: 'silkscreen', label: 'Silkscreen · pixel', stack: "'Silkscreen'" },
+  { value: 'vt323', label: 'VT323 · terminal', stack: "'VT323'" },
+  { value: 'system', label: 'System sans-serif', stack: 'system-ui' },
+]
+
 interface SettingsDialogProps {
   settings: DisplaySettings
   onSettingChange: <Key extends keyof DisplaySettings>(key: Key, value: DisplaySettings[Key]) => void
@@ -90,9 +101,11 @@ export function SettingsDialog({ settings, onSettingChange, onReset, onClose }: 
           <label className="setting-row" htmlFor="settings-font">
             <span><strong>Font</strong><small>Pick a type style for the schedule.</small></span>
             <select id="settings-font" value={settings.font} onChange={(event) => onSettingChange('font', event.target.value as FontChoice)}>
-              <option value="ndot">Ndot display</option>
-              <option value="geist">Geist</option>
-              <option value="system">System sans-serif</option>
+              {FONT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value} style={{ fontFamily: option.stack }}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </label>
           <label className="setting-row" htmlFor="settings-color-theme">

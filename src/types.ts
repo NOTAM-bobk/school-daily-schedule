@@ -8,7 +8,7 @@ export type LunchId = 'lunch1' | 'lunch2' | 'lunch3'
 
 export type ClockFormat = '12h' | '24h'
 export type DateFormat = 'long' | 'short' | 'numeric'
-export type FontChoice = 'ndot' | 'geist' | 'system'
+export type FontChoice = 'ndot' | 'geist' | 'grotesk' | 'orbitron' | 'silkscreen' | 'vt323' | 'system'
 export type ColorTheme = 'ocean' | 'violet' | 'light'
 export type DisplayMode = 'normal' | 'tv'
 export type DetailsChoice = 'on' | 'off'

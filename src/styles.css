@@ -786,6 +786,22 @@ button {
   --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
+:root[data-font='grotesk'] {
+  --font-sans: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+:root[data-font='orbitron'] {
+  --font-sans: 'Orbitron', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+:root[data-font='silkscreen'] {
+  --font-sans: 'Silkscreen', 'Ndot 55', ui-monospace, monospace;
+}
+
+:root[data-font='vt323'] {
+  --font-sans: 'VT323', 'Lettera Mono LL', ui-monospace, monospace;
+}
+
 :root[data-font='system'] {
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
@@ -863,16 +879,16 @@ button {
 
 @keyframes settings-fade-in { from { opacity: 0; } to { opacity: 1; } }
 
+/* Settings sit straight on the dimmed page background — no card, border or shadow. */
 .settings-dialog {
   display: flex;
   width: min(760px, 94vw);
   max-height: min(820px, 92vh);
   flex-direction: column;
   overflow: hidden;
-  background: var(--bg-card);
-  border: 1px solid var(--border-muted);
-  border-radius: 18px;
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.4);
+  background: none;
+  border: 0;
+  box-shadow: none;
   animation: settings-rise-in 220ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
@@ -915,12 +931,11 @@ button {
   display: grid;
   gap: 0;
   overflow: auto;
-  margin: 0 1.6rem 1.6rem;
-  padding: 0 1rem;
-  background: var(--bg-card-subtle);
-  border: 1px solid var(--border-subtle);
-  border-radius: 16px;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.14);
+  margin: 0;
+  padding: 0 1.6rem 1.6rem;
+  background: none;
+  border: 0;
+  box-shadow: none;
 }
 
 .setting-row {
@@ -1054,11 +1069,11 @@ button {
 
 @media (max-width: 640px) {
   .settings-backdrop { padding: 0; }
-  .settings-dialog { width: 100%; height: 100%; border: 0; border-radius: 0; }
+  .settings-dialog { width: 100%; height: 100%; }
   .settings-dialog-header { padding: 1.2rem 1rem 0.9rem; }
   .settings-dialog-header h2 { font-size: 1.2rem; }
   .settings-dialog-header p { font-size: 0.75rem; }
-  .settings-panel { padding: 0.8rem 1rem 1.5rem; }
+  .settings-panel { padding: 0 1rem 1.5rem; }
   .setting-row { gap: 0.75rem; min-height: 4.65rem; padding: 0.8rem 0.9rem; }
   .setting-row select { max-width: 44%; min-height: 2.35rem; padding-inline: 0.55rem; font-size: 0.72rem; }
   .setting-row small { max-width: 15rem; }
