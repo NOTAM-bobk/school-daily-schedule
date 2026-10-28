@@ -13,6 +13,22 @@ export type ColorTheme = 'ocean' | 'violet' | 'light'
 export type DisplayMode = 'normal' | 'tv'
 export type DetailsChoice = 'on' | 'off'
 export type GlowColor = 'teal' | 'blue' | 'violet' | 'amber' | 'rose'
+export type BackgroundStyle =
+  | 'default'
+  | 'gradient-ocean'
+  | 'gradient-violet'
+  | 'gradient-sunset'
+  | 'gradient-aurora'
+  | 'gradient-cyber'
+  | 'gradient-crimson'
+  | 'solid-black'
+  | 'solid-slate'
+  | 'solid-zinc'
+  | 'solid-navy'
+  | 'solid-forest'
+  | 'solid-plum'
+  | 'solid-light'
+  | 'custom'
 
 export interface DisplaySettings {
   clockFormat: ClockFormat
@@ -22,6 +38,8 @@ export interface DisplaySettings {
   displayMode: DisplayMode
   showCourseDetails: DetailsChoice
   glowColor: GlowColor
+  backgroundStyle: BackgroundStyle
+  customBgColor?: string
 }
 
 export type BlockKind = 'homeroom' | 'class' | 'lunch' | 'advisory' | 'anchor'

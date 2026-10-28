@@ -2,7 +2,18 @@ import BackgroundNoise from "./components/ui/background-noise"
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CountdownCard, type StatusTone } from './components/CountdownCard'
 import { LunchPicker } from './components/LunchPicker'
-import { SettingsDialog, type ClockFormat, type ColorTheme, type DateFormat, type DetailsChoice, type DisplayMode, type DisplaySettings, type FontChoice, type GlowColor } from './components/SettingsDialog'
+import {
+  SettingsDialog,
+  type BackgroundStyle,
+  type ClockFormat,
+  type ColorTheme,
+  type DateFormat,
+  type DetailsChoice,
+  type DisplayMode,
+  type DisplaySettings,
+  type FontChoice,
+  type GlowColor,
+} from './components/SettingsDialog'
 import { Timeline } from './components/Timeline'
 import type { WeekChoice } from './components/WeekSwitcher'
 import { LUNCHES, autoWeek, buildDay, dayTypeFor } from './data/schedule'
@@ -30,6 +41,8 @@ const DEFAULT_SETTINGS: DisplaySettings = {
   displayMode: 'normal',
   showCourseDetails: 'off',
   glowColor: 'teal',
+  backgroundStyle: 'default',
+  customBgColor: '#020617',
 }
 
 const FOOTER_LINKS = ['AB week schedule', 'Daily calendar', 'Year calendar', 'Lunch', 'TV Panel', 'Admin'] as const
@@ -68,10 +81,24 @@ export default function App() {
   const [displayMode, setDisplayMode] = useStoredState<DisplayMode>('minnetonka.settings.displayMode', DEFAULT_SETTINGS.displayMode)
   const [showCourseDetails, setShowCourseDetails] = useStoredState<DetailsChoice>('minnetonka.settings.courseDetails', DEFAULT_SETTINGS.showCourseDetails)
   const [glowColor, setGlowColor] = useStoredState<GlowColor>('minnetonka.settings.glowColor', DEFAULT_SETTINGS.glowColor)
+  const [backgroundStyle, setBackgroundStyle] = useStoredState<BackgroundStyle>('minnetonka.settings.background', DEFAULT_SETTINGS.backgroundStyle)
+  const [customBgColor, setCustomBgColor] = useStoredState<string>('minnetonka.settings.customBgColor', DEFAULT_SETTINGS.customBgColor ?? '#020617')
+
   const [settingsOpen, setSettingsOpen] = useState(false)
   const closeSettings = useCallback(() => setSettingsOpen(false), [])
 
-  const settings: DisplaySettings = { clockFormat, dateFormat, font, colorTheme, displayMode, showCourseDetails, glowColor }
+  const settings: DisplaySettings = {
+    clockFormat,
+    dateFormat,
+    font,
+    colorTheme,
+    displayMode,
+    showCourseDetails,
+    glowColor,
+    backgroundStyle,
+    customBgColor,
+  }
+
   const onSettingChange = <Key extends keyof DisplaySettings>(key: Key, value: DisplaySettings[Key]) => {
     switch (key) {
       case 'clockFormat': setClockFormat(value as ClockFormat); break
@@ -81,6 +108,8 @@ export default function App() {
       case 'displayMode': setDisplayMode(value as DisplayMode); break
       case 'showCourseDetails': setShowCourseDetails(value as DetailsChoice); break
       case 'glowColor': setGlowColor(value as GlowColor); break
+      case 'backgroundStyle': setBackgroundStyle(value as BackgroundStyle); break
+      case 'customBgColor': setCustomBgColor(value as string); break
     }
   }
 
@@ -92,13 +121,35 @@ export default function App() {
     setDisplayMode(DEFAULT_SETTINGS.displayMode)
     setShowCourseDetails(DEFAULT_SETTINGS.showCourseDetails)
     setGlowColor(DEFAULT_SETTINGS.glowColor)
+    setBackgroundStyle(DEFAULT_SETTINGS.backgroundStyle)
+    setCustomBgColor(DEFAULT_SETTINGS.customBgColor ?? '#020617')
   }
 
   useEffect(() => {
     document.documentElement.dataset.theme = colorTheme
     document.documentElement.dataset.font = font
     document.documentElement.dataset.glow = glowColor
-  }, [colorTheme, font, glowColor])
+    document.documentElement.dataset.background = backgroundStyle
+    if (backgroundStyle === 'custom' && customBgColor) {
+      document.documentElement.style.setProperty('--bg-custom', customBgColor)
+    } else {
+      document.documentElement.style.removeProperty('--bg-custom')
+    }
+  }, [colorTheme, font, glowColor, backgroundStyle, customBgColor])
+
+  const isSignMode = displayMode === 'tv'
+
+  // Keyboard shortcut: Escape exits sign mode
+  useEffect(() => {
+    if (!isSignMode) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setDisplayMode('normal')
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isSignMode, setDisplayMode])
 
   // Validate whatever came out of localStorage before trusting it.
   const weekChoice: WeekChoice = storedWeek === 'A' || storedWeek === 'B' ? storedWeek : 'auto'
@@ -160,89 +211,121 @@ export default function App() {
   return (
     <>
       <BackgroundNoise />
-      <div className={`page${displayMode === 'tv' ? ' page--tv' : ''}`}>
-        <header className="app-header">
-          <div className="controls-date top-date-banner">
-            <span className="controls-weekday">{new Intl.DateTimeFormat(undefined, { weekday: 'long' }).format(selectedDate)}</span>
-            <span className="controls-full-date">
-              {dateFormat === 'long'
-                ? new Intl.DateTimeFormat(undefined, { month: 'long', day: 'numeric', year: 'numeric' }).format(selectedDate)
-                : formatDate(selectedDate, dateFormat)}
-            </span>
-          </div>
-          <nav className="date-navigation" aria-label="Schedule date and week">
-            <div className="date-segmented" role="group" aria-label="Choose schedule day">
-              {([-1, 0, 1] as const).map((offset) => {
-                const label = offset === -1 ? 'Yesterday' : offset === 0 ? 'Today' : 'Tomorrow'
-                const isSelected = selectedDateKey === dayKey(dateAtOffset(offset))
-                return (
-                  <button
-                    key={offset}
-                    className={`date-segment-button${isSelected ? ' is-active' : ''}`}
-                    type="button"
-                    aria-pressed={isSelected}
-                    onClick={() => chooseDate(offset)}
-                  >
-                    {label}
-                  </button>
-                )
-              })}
+      <div className={`page${isSignMode ? ' page--tv page--sign' : ''}`}>
+        {!isSignMode && (
+          <header className="app-header">
+            <div className="controls-date top-date-banner">
+              <span className="controls-weekday">{new Intl.DateTimeFormat(undefined, { weekday: 'long' }).format(selectedDate)}</span>
+              <span className="controls-full-date">
+                {dateFormat === 'long'
+                  ? new Intl.DateTimeFormat(undefined, { month: 'long', day: 'numeric', year: 'numeric' }).format(selectedDate)
+                  : formatDate(selectedDate, dateFormat)}
+              </span>
             </div>
-            <button
-              className="week-toggle"
-              type="button"
-              onClick={toggleWeek}
-              aria-label={`Week ${week}${weekChoice === 'auto' ? ' is the calendar default' : ` selected; the calendar default is Week ${detectedWeek}`}. Switch to Week ${week === 'A' ? 'B' : 'A'}.`}
-              title={weekChoice === 'auto' ? 'Using the calendar default' : `Calendar default: Week ${detectedWeek}`}
-            >
-              <span>Week {week}</span>
-              <span className="week-toggle-note">{weekChoice === 'auto' ? 'Default week' : `Default: Week ${detectedWeek}`}</span>
-            </button>
-          </nav>
-        </header>
+            <nav className="date-navigation" aria-label="Schedule date and week">
+              <div className="date-segmented" role="group" aria-label="Choose schedule day">
+                {([-1, 0, 1] as const).map((offset) => {
+                  const label = offset === -1 ? 'Yesterday' : offset === 0 ? 'Today' : 'Tomorrow'
+                  const isSelected = selectedDateKey === dayKey(dateAtOffset(offset))
+                  return (
+                    <button
+                      key={offset}
+                      className={`date-segment-button${isSelected ? ' is-active' : ''}`}
+                      type="button"
+                      aria-pressed={isSelected}
+                      onClick={() => chooseDate(offset)}
+                    >
+                      {label}
+                    </button>
+                  )
+                })}
+              </div>
+              <button
+                className="week-toggle"
+                type="button"
+                onClick={toggleWeek}
+                aria-label={`Week ${week}${weekChoice === 'auto' ? ' is the calendar default' : ` selected; the calendar default is Week ${detectedWeek}`}. Switch to Week ${week === 'A' ? 'B' : 'A'}.`}
+                title={weekChoice === 'auto' ? 'Using the calendar default' : `Calendar default: Week ${detectedWeek}`}
+              >
+                <span>Week {week}</span>
+                <span className="week-toggle-note">{weekChoice === 'auto' ? 'Default week' : `Default: Week ${detectedWeek}`}</span>
+              </button>
+            </nav>
+          </header>
+        )}
 
-        <main className="layout">
-          <div className="daily-dashboard" key={`${selectedDateKey}-${week}-${lunch}`}>
+        <main className={`layout${isSignMode ? ' layout--sign' : ''}`}>
+          <div className={`daily-dashboard${isSignMode ? ' daily-dashboard--sign' : ''}`} key={`${selectedDateKey}-${week}-${lunch}`}>
             <CountdownCard
               eyebrow={hero.eyebrow}
-              caption={hero.caption}
+              caption={isSignMode ? '' : hero.caption}
               timer={hero.timer}
               targetDate={timerTarget}
               progress={hero.progress}
               statusLabel={hero.statusLabel}
               tone={hero.tone}
-              meta={hero.meta}
+              meta={isSignMode ? [] : hero.meta}
             />
             <div className="daily-dashboard-schedule">
-              {notice && <p className="notice">{notice}</p>}
+              {!isSignMode && notice && <p className="notice">{notice}</p>}
               <Timeline blocks={blocks} live={live} nowSeconds={nowSeconds} clockFormat={clockFormat} showCourseDetails={showCourseDetails} />
             </div>
           </div>
 
-          <section className="schedule-controls" aria-label="Schedule controls">
-            <LunchPicker value={lunch} onChange={setStoredLunch} clockFormat={clockFormat} />
-          </section>
+          {!isSignMode && (
+            <section className="schedule-controls" aria-label="Schedule controls">
+              <LunchPicker value={lunch} onChange={setStoredLunch} clockFormat={clockFormat} />
+            </section>
+          )}
         </main>
 
-        <footer className="footer">
-          <p className="visit-count">Site visits on this device <strong>{visitCount.toLocaleString()}</strong></p>
-          <nav className="footer-links" aria-label="Schedule quick links">
-            {FOOTER_LINKS.map((link) => (
-              <a key={link} href="#" onClick={(e) => e.preventDefault()} className="footer-link">
-                {link}
+        {!isSignMode ? (
+          <footer className="footer">
+            <p className="visit-count">Site visits on this device <strong>{visitCount.toLocaleString()}</strong></p>
+            <nav className="footer-links" aria-label="Schedule quick links">
+              {FOOTER_LINKS.map((link) => (
+                <a
+                  key={link}
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    if (link === 'TV Panel') {
+                      setDisplayMode('tv')
+                    }
+                  }}
+                  className="footer-link"
+                >
+                  {link === 'TV Panel' ? 'Sign mode' : link}
+                </a>
+              ))}
+              <a
+                className="footer-link"
+                href="https://docs.google.com/forms/d/e/1FAIpQLSfJyrglqlKc2nvIQoHHsO_u2MrxL5M6dZRB0WlpX2HZbpEzJw/viewform"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Bug report
               </a>
-            ))}
-            <a
-              className="footer-link"
-              href="https://docs.google.com/forms/d/e/1FAIpQLSfJyrglqlKc2nvIQoHHsO_u2MrxL5M6dZRB0WlpX2HZbpEzJw/viewform"
-              target="_blank"
-              rel="noreferrer"
+              <button type="button" className="footer-link footer-settings" onClick={() => setSettingsOpen(true)}>Settings</button>
+            </nav>
+          </footer>
+        ) : (
+          <div className="sign-mode-bottom-bar">
+            <button
+              type="button"
+              className="exit-sign-mode-button"
+              onClick={() => setDisplayMode('normal')}
+              aria-label="Exit sign mode"
             >
-              Bug report
-            </a>
-            <button type="button" className="footer-link footer-settings" onClick={() => setSettingsOpen(true)}>Settings</button>
-          </nav>
-        </footer>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                <polyline points="10 17 15 12 10 7" />
+                <line x1="15" y1="12" x2="3" y2="12" />
+              </svg>
+              <span>Exit sign mode</span>
+            </button>
+          </div>
+        )}
       </div>
       {settingsOpen && (
         <SettingsDialog settings={settings} onSettingChange={onSettingChange} onReset={resetSettings} onClose={closeSettings} />
@@ -277,12 +360,14 @@ function describeHero(args: HeroArgs): Hero {
     if (status.phase === 'in' && status.current) {
       const current = status.current
       const isLunch = current.kind === 'lunch'
+      const periodLabel = current.kind === 'class' ? current.label : current.title
+      const periodEndText = isLunch ? `Lunch ends at ${time(current.end)}` : `${periodLabel} ends at ${time(current.end)}`
       return {
-        eyebrow: current.kind === 'class' ? current.label : current.title,
-        caption: `${current.kind === 'class' ? current.label : current.title} ends at ${time(current.end)}`,
+        eyebrow: '',
+        caption: current.title && current.title !== periodLabel ? current.title : '',
         timer: selectedSchoolDay ? 0 : status.seconds,
         progress: selectedSchoolDay ? null : status.progress,
-        statusLabel: isLunch ? 'Lunch' : 'In session',
+        statusLabel: periodEndText,
         tone: isLunch ? 'lunch' : 'live',
         meta: [`${current.end - current.start} min`],
       }
@@ -291,11 +376,11 @@ function describeHero(args: HeroArgs): Hero {
     if (status.phase === 'passing' && status.next) {
       const next = status.next
       return {
-        eyebrow: 'Passing period',
-        caption: `${next.label} starts at ${time(next.start)}`,
+        eyebrow: '',
+        caption: '',
         timer: selectedSchoolDay ? 0 : status.seconds,
         progress: null,
-        statusLabel: 'Between bells',
+        statusLabel: `Passing · ${next.label} starts at ${time(next.start)}`,
         tone: 'live',
         meta: [],
       }
@@ -303,22 +388,22 @@ function describeHero(args: HeroArgs): Hero {
 
     if (status.phase === 'before' && status.next) {
       return {
-        eyebrow: `${dayName} · ${dayType} day`,
-        caption: `First bell rings at ${time(firstBell)}`,
+        eyebrow: '',
+        caption: `${dayName} · ${dayType} day`,
         timer: selectedSchoolDay ? 0 : status.seconds,
         progress: null,
-        statusLabel: 'Before school',
+        statusLabel: `First bell rings at ${time(firstBell)}`,
         tone: 'idle',
         meta: [],
       }
     }
 
     return {
-      eyebrow: 'School day complete',
+      eyebrow: '',
       caption: 'Classes have ended for today.',
       timer: 0,
       progress: null,
-      statusLabel: "School's out",
+      statusLabel: "School's out for today",
       tone: 'off',
       meta: [],
     }
@@ -326,11 +411,11 @@ function describeHero(args: HeroArgs): Hero {
 
   if (!schoolToday) {
     return {
-      eyebrow: closureReason ?? 'No classes today',
+      eyebrow: '',
       caption: nextSchoolDay ? `Next school day: ${formatDate(nextSchoolDay, dateFormat)}` : 'No classes today',
       timer: 0,
       progress: null,
-      statusLabel: 'No school today',
+      statusLabel: closureReason ?? 'No school today',
       tone: 'off',
       meta: [],
     }
@@ -339,10 +424,10 @@ function describeHero(args: HeroArgs): Hero {
   if (selectedSchoolDay) {
     return {
       eyebrow: `${dayName} · ${dayType} day`,
-      caption: `${dayName} starts at ${time(firstBell)}`,
+      caption: '',
       timer: 0,
       progress: null,
-      statusLabel: 'Preview',
+      statusLabel: `${dayName} starts at ${time(firstBell)}`,
       tone: 'idle',
       meta: [],
     }
@@ -350,10 +435,10 @@ function describeHero(args: HeroArgs): Hero {
 
   return {
     eyebrow: `${dayName} · ${dayType} day`,
-    caption: `${dayName} starts at ${time(firstBell)}`,
+    caption: '',
     timer: secondsUntilWeekdayStart(now, selectedDay, firstBell),
     progress: null,
-    statusLabel: 'Preview',
+    statusLabel: `${dayName} starts at ${time(firstBell)}`,
     tone: 'idle',
     meta: [],
   }

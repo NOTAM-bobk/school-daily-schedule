@@ -1,7 +1,17 @@
 import { useEffect, useRef } from 'react'
-import type { ClockFormat, ColorTheme, DateFormat, DisplayMode, DisplaySettings, FontChoice, GlowColor } from '../types'
+import type {
+  BackgroundStyle,
+  ClockFormat,
+  ColorTheme,
+  DateFormat,
+  DisplayMode,
+  DisplaySettings,
+  FontChoice,
+  GlowColor,
+} from '../types'
 
 export type {
+  BackgroundStyle,
   ClockFormat,
   ColorTheme,
   DateFormat,
@@ -108,6 +118,57 @@ export function SettingsDialog({ settings, onSettingChange, onReset, onClose }: 
               ))}
             </select>
           </label>
+          <label className="setting-row" htmlFor="settings-background">
+            <span><strong>Background</strong><small>Choose a gradient or solid background color.</small></span>
+            <select
+              id="settings-background"
+              value={settings.backgroundStyle}
+              onChange={(event) => onSettingChange('backgroundStyle', event.target.value as BackgroundStyle)}
+            >
+              <optgroup label="Gradients">
+                <option value="default">Default ambient slate</option>
+                <option value="gradient-ocean">Ocean twilight gradient</option>
+                <option value="gradient-violet">Cosmic violet gradient</option>
+                <option value="gradient-sunset">Sunset ember gradient</option>
+                <option value="gradient-aurora">Emerald aurora gradient</option>
+                <option value="gradient-cyber">Cyber slate gradient</option>
+                <option value="gradient-crimson">Crimson night gradient</option>
+              </optgroup>
+              <optgroup label="Solid Colors">
+                <option value="solid-black">Pure black (AMOLED)</option>
+                <option value="solid-slate">Slate navy</option>
+                <option value="solid-zinc">Charcoal zinc</option>
+                <option value="solid-navy">Midnight navy</option>
+                <option value="solid-forest">Deep forest</option>
+                <option value="solid-plum">Deep plum</option>
+                <option value="solid-light">Minimal off-white</option>
+                <option value="custom">Custom solid color...</option>
+              </optgroup>
+            </select>
+          </label>
+          {settings.backgroundStyle === 'custom' && (
+            <div className="setting-row setting-row--sub">
+              <span><strong>Custom color</strong><small>Pick any custom color for the canvas.</small></span>
+              <div className="custom-color-picker-group">
+                <input
+                  type="color"
+                  id="settings-custom-color"
+                  className="color-input-swatch"
+                  value={settings.customBgColor || '#020617'}
+                  onChange={(e) => onSettingChange('customBgColor', e.target.value)}
+                  aria-label="Pick custom background color"
+                />
+                <input
+                  type="text"
+                  className="color-input-text"
+                  value={settings.customBgColor || '#020617'}
+                  onChange={(e) => onSettingChange('customBgColor', e.target.value)}
+                  placeholder="#020617"
+                  aria-label="Custom background hex"
+                />
+              </div>
+            </div>
+          )}
           <label className="setting-row" htmlFor="settings-color-theme">
             <span><strong>Colors</strong><small>Change the schedule's color palette.</small></span>
             <select id="settings-color-theme" value={settings.colorTheme} onChange={(event) => onSettingChange('colorTheme', event.target.value as ColorTheme)}>
@@ -127,10 +188,10 @@ export function SettingsDialog({ settings, onSettingChange, onReset, onClose }: 
             </select>
           </label>
           <label className="setting-row" htmlFor="settings-display-mode">
-            <span><strong>Display mode</strong><small>TV mode enlarges the live schedule for distance viewing.</small></span>
+            <span><strong>Display mode</strong><small>Sign mode enlarges the live countdown and schedule for kiosk or TV displays.</small></span>
             <select id="settings-display-mode" value={settings.displayMode} onChange={(event) => onSettingChange('displayMode', event.target.value as DisplayMode)}>
               <option value="normal">Normal</option>
-              <option value="tv">TV display</option>
+              <option value="tv">Sign mode (TV display)</option>
             </select>
           </label>
           <label className="setting-row" htmlFor="settings-course-details">

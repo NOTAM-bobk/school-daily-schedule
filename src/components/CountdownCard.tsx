@@ -39,8 +39,8 @@ export function CountdownCard({
     <section className={`countdown-hero countdown-hero--${tone}`} aria-label="Countdown to the next bell">
       <div className="countdown-status">
         <span className={`status-dot status-dot--${tone}`} aria-hidden="true" />
-        <span>{statusLabel}</span>
-        <span className="countdown-eyebrow">{eyebrow}</span>
+        <span className="countdown-status-text">{statusLabel}</span>
+        {eyebrow ? <span className="countdown-eyebrow">{eyebrow}</span> : null}
       </div>
 
       <div className="countdown-dial">
@@ -68,7 +68,7 @@ export function CountdownCard({
         </div>
       </div>
 
-      <p className="countdown-caption">{caption}</p>
+      {caption ? <p className="countdown-caption">{caption}</p> : null}
       {meta.length > 0 && <p className="countdown-meta">{meta.join(' · ')}</p>}
       {timer !== null && <span className="sr-only">{formatCountdown(timer)} remaining</span>}
     </section>
